@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--config', type=str, default="./config/beauty.yaml")
+    parser.add_argument('--config', type=str, default="./config/scientific.yaml")
 
     args, unknown_args = parser.parse_known_args()
     return args, unknown_args

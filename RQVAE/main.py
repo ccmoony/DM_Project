@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument('--lr_scheduler_type', type=str, default="linear", help='scheduler')
     parser.add_argument('--warmup_epochs', type=int, default=50, help='warmup epochs')
     parser.add_argument("--data_path", type=str,
-                        default="/media/zhengbowen/data/Amazon2018/Processed/Instruments/Instruments.emb-llama2-td.npy",
+                        default="../dataset/scientific_emb_256.npy",
                         help="Input data path.")
     parser.add_argument("--device", type=str, default="cuda:1", help="gpu or cpu")
 
@@ -35,8 +35,6 @@ def parse_args():
     parser.add_argument('--e_dim', type=int, default=2048, help='vq codebook embedding size')
     parser.add_argument('--quant_loss_weight', type=float, default=1.0, help='vq quantion loss weight')
     parser.add_argument("--beta", type=float, default=0.25, help="Beta for commitment loss")
-    # parser.add_argument('--layers', type=int, nargs='+', default=[2048, 1024, 512, 256, 128, 64],
-    #                     help='hidden sizes of every layer')
     parser.add_argument('--layers', type=int, nargs='+', default=[3072],
                         help='hidden sizes of every layer')
     parser.add_argument("--dropout_prob", type=float, default=0.0, help="dropout ratio")
@@ -54,11 +52,9 @@ def parse_args():
     parser.add_argument("--sk_iters", type=int, default=50, help="max sinkhorn iters")
     parser.add_argument("--moving_avg_decay", type=int, default=0.99, help="moving_average decay")
 
-
     #save
     parser.add_argument('--save_limit', type=int, default=3)
-    parser.add_argument("--ckpt_dir", type=str,
-                        default="/media/zhengbowen/rqvae_ckpt/LLaMA2/", help="output directory for model")
+    parser.add_argument("--ckpt_dir", type=str, default="./rqvae_ckpt/", help="output directory for model")
 
     return parser.parse_args()
 
