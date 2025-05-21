@@ -9,13 +9,13 @@ from tqdm import tqdm
 import json
 import math
 from colorama import init
-from utils import ensure_dir, set_color, get_local_time
+from utils.utils import ensure_dir, set_color, get_local_time
 from accelerate import PartialState
 from model import Model
 from transformers import get_linear_schedule_with_warmup, get_constant_schedule_with_warmup
 from transformers.optimization import get_scheduler
 from metrics import *
-from utils import *
+from utils.utils import *
 from collections import defaultdict
 from logging import getLogger
 init(autoreset=True)

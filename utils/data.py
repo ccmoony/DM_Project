@@ -1,6 +1,6 @@
 import os
 import torch
-from utils import *
+from utils.utils import *
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 import random
