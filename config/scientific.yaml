@@ -74,3 +74,5 @@ kmeans_iters: 100
 dropout_prob: 0.0
 bn: False
 loss_type: mse
+
+no_cache: False

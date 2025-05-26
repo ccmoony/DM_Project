@@ -93,7 +93,9 @@ def load_split_data(config):
         }
         
         # Build interests cache
-        interests_cache = build_interests_cache(interests_dict, config.get('device', 'cpu'))
+        interests_cache = None
+        if not config["no_cache"]:
+            interests_cache = build_interests_cache(interests_dict, config.get('device', 'cpu'))
     
     n_items = len(item2id)
 
