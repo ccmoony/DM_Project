@@ -218,7 +218,7 @@ class Trainer(object):
         iter_data = tqdm(
                     self.train_data,
                     total=len(self.train_data),
-                    ncols=100,
+                    dynamic_ncols=True,
                     desc=set_color(f"Train {epoch_idx}","pink"),
                     disable=(not verbose) or (not self.accelerator.is_main_process),
                     )
@@ -229,6 +229,10 @@ class Trainer(object):
                 total_num += 1
                 
                 self.rec_optimizer.zero_grad()
+
+                interests = batch['interests']
+
+                pass
                 
                 input_ids = batch['input_ids'].to(self.device)
                 attention_mask = batch["attention_mask"].to(self.device)
@@ -252,7 +256,8 @@ class Trainer(object):
 
                 outputs = self.model_rec(input_ids=input_ids,
                                          attention_mask=attention_mask,
-                                         labels=labels)
+                                         labels=labels,
+                                         interests = interests)
           
                 logits = outputs.logits  # (batch, code_len, code_num)
 
@@ -325,7 +330,7 @@ class Trainer(object):
         iter_data = tqdm(
                     self.train_data,
                     total=len(self.train_data),
-                    ncols=100,
+                    dynamic_ncols=True,
                     desc=set_color(f"Train {epoch_idx}","pink"),
                     disable=(not verbose) or (not self.accelerator.is_main_process),
                     )

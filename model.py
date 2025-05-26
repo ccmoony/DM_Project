@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from transformers.modeling_outputs import ModelOutput
 from vq import RQVAE
 from layers import *
+from sentence_transformers import SentenceTransformer
 
 
 @dataclass
@@ -53,6 +54,14 @@ class Model(nn.Module, GenerationMixin):
         dec_adapter_layers = config['layers'][::-1]
         dec_adapter_layers = [self.hidden_size] + [self.semantic_hidden_size]
         self.dec_adapter = MLPLayers(layers=dec_adapter_layers)
+
+        self.interest_encoder = SentenceTransformer("all-MiniLM-L6-v2", device=self.device)
+        self.interest_encoder.eval()
+        self.interest_proj = nn.Linear(384, config['e_dim'])
+        self.interest_fusion = nn.MultiheadAttention(
+            embed_dim=config['e_dim'], 
+            num_heads=8
+        )
         
         # parameters initialization
         self.apply(self._init_weights)
@@ -94,7 +103,7 @@ class Model(nn.Module, GenerationMixin):
         return inputs_embeds
     
     def forward(self, input_ids=None, inputs_embeds=None, attention_mask=None, labels=None, decoder_input_ids=None,
-                decoder_inputs_embeds=None, encoder_outputs=None, **kwargs):
+                decoder_inputs_embeds=None, encoder_outputs=None, interests=None, **kwargs):
         
         if input_ids is not None:
             inputs_embeds = self.get_input_embeddings(input_ids, attention_mask)
@@ -137,6 +146,18 @@ class Model(nn.Module, GenerationMixin):
         seq_latents[~attention_mask] = 0
         seq_last_latents = torch.sum(seq_latents, dim=1) / attention_mask.sum(dim=1).unsqueeze(1)
         seq_project_latents = self.enc_adapter(seq_last_latents)
+
+        # fusion with interests
+        if interests is None:
+            interests = [""] * input_ids.shape[0]
+        interests_embed = self.interest_encoder.encode(interests, show_progress_bar=False)
+        interests_embed = torch.tensor(interests_embed, device=self.device, dtype=torch.float32)
+        interests_embed_proj = self.interest_proj(interests_embed)
+        seq_project_latents, _ = self.interest_fusion(
+            query = interests_embed_proj,
+            key = seq_project_latents,
+            value = seq_project_latents
+        )
         
         dec_latents = model_outputs.decoder_hidden_states[-1].clone()
         dec_latents = dec_latents[:,0,:]

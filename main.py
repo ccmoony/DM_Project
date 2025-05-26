@@ -33,7 +33,7 @@ def train(config, accelerator=None, verbose=True, rank=0):
     log(f'Device: {config["device"]}', accelerator, logger)
     log(f'Config: {str(config)}', accelerator, logger)
 
-    item2id, num_items, train, valid, test = load_split_data(config)
+    item2id, num_items, train, valid, test, interests = load_split_data(config)
     code_num = config['code_num']
     code_length = config['code_length'] # current length of the code
     eos_token_id = -1
@@ -46,7 +46,7 @@ def train(config, accelerator=None, verbose=True, rank=0):
     semantic_emb_path = os.path.join(dataset_path, config["semantic_emb_path"])
     
     
-    accelerator.wait_for_everyone()
+    accelerator.wait_for_everyone() if accelerator else None
     # Initialize the model with the custom configuration
     model_config = T5Config(
             num_layers=config['encoder_layers'], 
@@ -82,9 +82,9 @@ def train(config, accelerator=None, verbose=True, rank=0):
     if rqvae_path is not None:
         safe_load(model_id, rqvae_path, verbose)
 
-    train_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=train)
-    valid_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=valid)
-    test_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=test)
+    train_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=train, interests=interests["train"] if interests else None)
+    valid_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=valid, interests=interests["valid"] if interests else None)
+    test_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=test, interests=interests["test"] if interests else None)
 
     collator = Collator(eos_token_id=eos_token_id, pad_token_id=0, max_length=config['max_length'])
 
@@ -106,7 +106,7 @@ def train(config, accelerator=None, verbose=True, rank=0):
     test_results = trainer.test()
     
     
-    if accelerator.is_main_process:
+    if accelerator and accelerator.is_main_process:
         log(f"Pre Best Validation Score: {best_score_pre}", accelerator, logger)
         log(f"Pre Test Results: {test_results_pre}", accelerator, logger)
         log(f"Best Validation Score: {best_score}", accelerator, logger)

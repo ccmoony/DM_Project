@@ -21,10 +21,15 @@ def load_split_data(config):
     dataset = config["dataset"]
     dataset_path = os.path.join(data_path, f"{dataset}/{dataset}")
     map_path = dataset_path + config["map_path"]
+
+    if config["interest_fusion"]:
+        processed = ".processed"
+    else:
+        processed = ""
     
-    train_inter = load_jsonl(dataset_path + ".train.jsonl")
-    valid_inter = load_jsonl(dataset_path + ".valid.jsonl")
-    test_inter = load_jsonl(dataset_path + ".test.jsonl")
+    train_inter = load_jsonl(dataset_path + f".train{processed}.jsonl")
+    valid_inter = load_jsonl(dataset_path + f".valid{processed}.jsonl")
+    test_inter = load_jsonl(dataset_path + f".test{processed}.jsonl")
 
     item2id = load_json(map_path) # id start from 1, 2, ...
     
@@ -32,14 +37,22 @@ def load_split_data(config):
     valid_seq = transform_token2id_seq(valid_inter, item2id)
     test_seq = transform_token2id_seq(test_inter, item2id)
 
+    interests_dict = None
+
+    if config["interest_fusion"]:
+        interests_dict = {
+            "train": [i["interests"] for i in train_inter],
+            "valid": [i["interests"] for i in valid_inter],
+            "test": [i["interests"] for i in test_inter],
+        }
     
     n_items = len(item2id)
 
-    return item2id, n_items, train_seq, valid_seq, test_seq
+    return item2id, n_items, train_seq, valid_seq, test_seq, interests_dict
     
     
 class SequentialSplitDataset(Dataset):
-    def __init__(self, config, n_items, inter_seq, data_ratio=1):
+    def __init__(self, config, n_items, inter_seq, data_ratio=1, interests=None):
         self.n_items = n_items
         self.config = config
 
@@ -49,6 +62,8 @@ class SequentialSplitDataset(Dataset):
             inter_seq = random.sample(inter_seq, n_sample)
             
         self.data = self.__map_inter__(inter_seq)
+
+        self.interests = interests
 
     def __map_inter__(self, inter_seq):
         data = []
@@ -64,8 +79,9 @@ class SequentialSplitDataset(Dataset):
         data = self.data[idx]
         id_seq = data['id_seq']
         target = data['target']
-        
-        return id_seq, target
+        interests = self.interests[idx] if self.interests else None
+            
+        return id_seq, target, interests
 
     def __len__(self):
         return len(self.data)
@@ -83,7 +99,8 @@ class Collator(object):
         return seq
     
     def __call__(self, batch):
-        id_seqs, targets = zip(*batch)
+        # Update to unpack 3 values from each item in batch
+        id_seqs, targets, interests_list = zip(*batch)
         
         input_ids = [torch.tensor(self.__pad_seq__(id_seq)) for id_seq in id_seqs]
         input_ids = pad_sequence(input_ids).transpose(0, 1)
@@ -96,9 +113,19 @@ class Collator(object):
 
         targets = targets.to(torch.long).contiguous()
         
-        return dict(input_ids=input_ids,
-                    attention_mask=attention_mask,
-                    targets=targets)
+        result_dict = {
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'targets': targets
+        }
+        
+        # Add interests to result dict if they are not None and not all empty strings
+        if any(interest is not None and interest != "" for interest in interests_list):
+            # Since interests are string data, we don't need to convert to tensor
+            # Just pass them through as a list
+            result_dict['interests'] = interests_list
+            
+        return result_dict
 
 
 
