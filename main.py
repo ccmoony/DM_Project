@@ -13,6 +13,8 @@ from utils.utils import *
 from vq import RQVAE
 from logging import getLogger
 warnings.filterwarnings("ignore")
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -33,7 +35,7 @@ def train(config, accelerator=None, verbose=True, rank=0):
     log(f'Device: {config["device"]}', accelerator, logger)
     log(f'Config: {str(config)}', accelerator, logger)
 
-    item2id, num_items, train, valid, test, interests = load_split_data(config)
+    item2id, num_items, train, valid, test, interests, interests_cache = load_split_data(config)
     code_num = config['code_num']
     code_length = config['code_length'] # current length of the code
     eos_token_id = -1
@@ -74,6 +76,10 @@ def train(config, accelerator=None, verbose=True, rank=0):
         
     model_rec.semantic_embedding.weight.data[1:] = torch.tensor(semantic_emb).to(config['device'])
     model_id = RQVAE(config=config, in_dim=model_rec.semantic_hidden_size)
+    
+    # Set interests cache if available
+    if interests_cache is not None:
+        model_rec.set_interests_cache(interests_cache)
     
     log(model_rec, accelerator, logger)
     log(model_id, accelerator, logger)

@@ -63,8 +63,16 @@ class Model(nn.Module, GenerationMixin):
             num_heads=8
         )
         
+        # Interest cache for faster encoding
+        self.interests_cache = None
+        
         # parameters initialization
         self.apply(self._init_weights)
+    
+    def set_interests_cache(self, interests_cache):
+        """Set the interests cache for faster encoding during training."""
+        self.interests_cache = interests_cache
+        print(f"Interests cache set with {len(interests_cache)} entries")
 
     def _init_weights(self, module):
         """Initialize the weights"""
@@ -145,19 +153,36 @@ class Model(nn.Module, GenerationMixin):
         # mean pooling
         seq_latents[~attention_mask] = 0
         seq_last_latents = torch.sum(seq_latents, dim=1) / attention_mask.sum(dim=1).unsqueeze(1)
-        seq_project_latents = self.enc_adapter(seq_last_latents)
+        # seq_project_latents = self.enc_adapter(seq_last_latents)
 
         # fusion with interests
         if interests is None:
             interests = [""] * input_ids.shape[0]
-        interests_embed = self.interest_encoder.encode(interests, show_progress_bar=False)
-        interests_embed = torch.tensor(interests_embed, device=self.device, dtype=torch.float32)
+        
+        # Use cached embeddings if available
+        if self.interests_cache is not None:
+            interests_embed = []
+            for interest in interests:
+                if interest in self.interests_cache:
+                    interests_embed.append(self.interests_cache[interest])
+                else:
+                    # Fallback to real-time encoding for unknown interests
+                    fallback_embed = self.interest_encoder.encode([interest], show_progress_bar=False)
+                    interests_embed.append(torch.tensor(fallback_embed[0], device=self.device, dtype=torch.float32))
+            interests_embed = torch.stack(interests_embed, dim=0).to(self.device)
+        else:
+            # Original real-time encoding
+            interests_embed = self.interest_encoder.encode(interests, show_progress_bar=False)
+            interests_embed = torch.tensor(interests_embed, device=self.device, dtype=torch.float32)
+        
         interests_embed_proj = self.interest_proj(interests_embed)
-        seq_project_latents, _ = self.interest_fusion(
+        seq_last_latents, _ = self.interest_fusion(
             query = interests_embed_proj,
-            key = seq_project_latents,
-            value = seq_project_latents
+            key = seq_last_latents,
+            value = seq_last_latents
         )
+
+        seq_project_latents = self.enc_adapter(seq_last_latents)
         
         dec_latents = model_outputs.decoder_hidden_states[-1].clone()
         dec_latents = dec_latents[:,0,:]
@@ -172,17 +197,21 @@ class Model(nn.Module, GenerationMixin):
         return outputs
     
     def generate(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, n_return_sequences: int = 1,
-                 prefix_allowed_tokens_fn=None) -> torch.Tensor:
+                 prefix_allowed_tokens_fn=None, interests=None) -> torch.Tensor:
         """
         Generates sequences using beam search algorithm.
 
         Args:
             batch (dict): A dictionary containing input_ids and attention_mask.
             n_return_sequences (int): The number of sequences to generate.
+            interests: User interests to be passed to the model.
 
         Returns:
             torch.Tensor: The generated sequences.
         """
+        # Store interests temporarily for use in forward pass
+        self._current_interests = interests
+        
         if prefix_allowed_tokens_fn is not None:
             inputs_embeds = self.get_input_embeddings(input_ids, attention_mask)
             outputs = super().generate(
@@ -200,8 +229,13 @@ class Model(nn.Module, GenerationMixin):
                 max_length=self.code_length+1,
                 num_beams=self.num_beams,
                 num_return_sequences=n_return_sequences,
-                return_score=False
+                return_score=False,
+                interests=interests
             )
+        
+        # Clear stored interests
+        self._current_interests = None
+        
         outputs = outputs[:, 1:].reshape(-1, n_return_sequences, self.code_length)
         return outputs
 
@@ -212,7 +246,8 @@ class Model(nn.Module, GenerationMixin):
         max_length=6,
         num_beams=1,
         num_return_sequences=1,
-        return_score=False
+        return_score=False,
+        interests=None
     ):
         """
         Adpated from huggingface's implementation
@@ -268,7 +303,8 @@ class Model(nn.Module, GenerationMixin):
                 outputs = self.forward(
                     encoder_outputs=encoder_outputs,
                     attention_mask=attention_mask,
-                    decoder_input_ids=decoder_input_ids
+                    decoder_input_ids=decoder_input_ids,
+                    interests=interests
                 )
 
             decoder_input_ids, beam_scores = self.beam_search_step(

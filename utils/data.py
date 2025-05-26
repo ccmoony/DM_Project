@@ -4,6 +4,51 @@ from utils.utils import *
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 import random
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+
+def build_interests_cache(interests_dict, device='cuda'):
+    """
+    Build a cache for interests embeddings to avoid repeated encoding during training.
+    
+    Args:
+        interests_dict: Dictionary containing interests for train/valid/test sets
+        device: Device to load the sentence transformer on
+        
+    Returns:
+        Dictionary mapping interests strings to their embeddings
+    """
+    print("Building interests cache...")
+    
+    # Collect all unique interests
+    all_interests = set()
+    for split in interests_dict.values():
+        for interest in split:
+            if interest and interest.strip():  # Skip empty interests
+                all_interests.add(interest)
+    
+    all_interests = list(all_interests)
+    print(f"Found {len(all_interests)} unique interests")
+    
+    # Initialize sentence transformer
+    interest_encoder = SentenceTransformer("all-MiniLM-L6-v2", device=device)
+    interest_encoder.eval()
+    
+    # Encode all unique interests
+    interests_embeddings = interest_encoder.encode(all_interests, show_progress_bar=True, batch_size=512)
+    
+    # Build cache dictionary
+    interests_cache = {}
+    for interest, embedding in zip(all_interests, interests_embeddings):
+        interests_cache[interest] = torch.tensor(embedding, dtype=torch.float32)
+    
+    # Add empty string mapping
+    empty_embedding = torch.zeros(384, dtype=torch.float32)  # 384 is the embedding dimension for all-MiniLM-L6-v2
+    interests_cache[""] = empty_embedding
+    
+    print(f"Interests cache built with {len(interests_cache)} entries")
+    return interests_cache
 
 
 def load_split_data(config):
@@ -38,6 +83,7 @@ def load_split_data(config):
     test_seq = transform_token2id_seq(test_inter, item2id)
 
     interests_dict = None
+    interests_cache = None
 
     if config["interest_fusion"]:
         interests_dict = {
@@ -45,10 +91,13 @@ def load_split_data(config):
             "valid": [i["interests"] for i in valid_inter],
             "test": [i["interests"] for i in test_inter],
         }
+        
+        # Build interests cache
+        interests_cache = build_interests_cache(interests_dict, config.get('device', 'cpu'))
     
     n_items = len(item2id)
 
-    return item2id, n_items, train_seq, valid_seq, test_seq, interests_dict
+    return item2id, n_items, train_seq, valid_seq, test_seq, interests_dict, interests_cache
     
     
 class SequentialSplitDataset(Dataset):

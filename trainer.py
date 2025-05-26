@@ -699,7 +699,7 @@ class Trainer(object):
         iter_data = tqdm(
             test_data,
             total=len(test_data),
-            ncols=100,
+            dynamic_ncols=True,
             desc=set_color(f"Evaluate   ", "pink"),
             disable=(not verbose) or (not self.accelerator.is_main_process),
         )
@@ -717,8 +717,8 @@ class Trainer(object):
         item_code = torch.tensor(code).to(self.device)
 
         for batch_idx, data in enumerate(iter_data):
-            input_ids, attention_mask, labels \
-                = data["input_ids"].to(self.device), data["attention_mask"].to(self.device), data["targets"].to(self.device)
+            input_ids, attention_mask, labels, interests \
+                = data["input_ids"].to(self.device), data["attention_mask"].to(self.device), data["targets"].to(self.device), data["interests"]
 
             B = input_ids.size(0)
             input_ids = item_code[input_ids].contiguous().clone().view(B, -1)
@@ -726,12 +726,12 @@ class Trainer(object):
             attention_mask = (input_ids != -1).bool() 
 
             if dist.is_initialized():
-                preds = self.model_rec.module.generate(input_ids=input_ids, attention_mask=attention_mask, n_return_sequences=10)
+                preds = self.model_rec.module.generate(input_ids=input_ids, attention_mask=attention_mask, n_return_sequences=10, interests=interests)
                 all_preds, all_labels = self.accelerator.gather_for_metrics((preds, labels))
                 _metrics = self.evaluate(all_preds, all_labels)
                 total += len(all_labels)
             else:
-                preds = self.model_rec.generate(input_ids=input_ids, attention_mask=attention_mask, n_return_sequences=10)
+                preds = self.model_rec.generate(input_ids=input_ids, attention_mask=attention_mask, n_return_sequences=10, interests=interests)
                 _metrics = self.evaluate(preds, labels)
                 total += len(labels)
 
