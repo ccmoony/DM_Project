@@ -1,0 +1,960 @@
+Wed 28 May 2025 15:05:40 INFO  Device: cuda
+Wed 28 May 2025 15:05:40 INFO  Config: {'dataset': 'scientific', 'seed': 2020, 'reproducibility': True, 'log_dir': './logs', 'map_path': '.emb_map.json', 'semantic_emb_path': 'scientific_emb_256.npy', 'semantic_hidden_size': 256, 'code_num': 256, 'code_length': 4, 'epochs': 400, 'lr_rec': 0.005, 'lr_id': 0.0001, 'weight_decay': 0.05, 'id_vq_loss': 1, 'id_code_loss': 0, 'id_kl_loss': 0.0001, 'id_dec_cl_loss': 0.0003, 'rec_vq_loss': 0, 'rec_code_loss': 1, 'rec_kl_loss': 0.0001, 'rec_dec_cl_loss': 0.0003, 'cycle': 2, 'sim': 'cos', 'warmup_steps': 8000, 'batch_size': 512, 'eval_batch_size': 32, 'num_workers': 8, 'eval_step': 2, 'learner': 'AdamW', 'data_path': './dataset', 'lr_scheduler_type': 'cosine', 'gradient_accumulation_steps': 1, 'max_his_len': 50, 'early_stop': 15, 'metrics': 'recall@1,recall@5,ndcg@5,recall@10,ndcg@10', 'valid_metric': 'ndcg@10', 'max_length': 210, 'encoder_layers': 6, 'decoder_layers': 6, 'd_model': 128, 'd_ff': 512, 'num_heads': 4, 'd_kv': 64, 'dropout_rate': 0.1, 'activation_function': 'relu', 'feed_forward_proj': 'relu', 'num_beams': 20, 'alpha': 1, 'warm_epoch': 10, 'rqvae_path': './dataset/scientific/256-512-256-128.rqvae.pth', 'num_emb_list': [256, 256, 256], 'beta': 0.25, 'e_dim': 128, 'layers': [512, 256], 'vq_type': 'vq', 'dist': 'l2', 'tau': 0.07, 'kmeans_init': False, 'kmeans_iters': 100, 'dropout_prob': 0.0, 'bn': False, 'loss_type': 'mse', 'device': device(type='cuda'), 'use_ddp': True, 'run_local_time': 'May-28-2025_15-05', 'save_path': './myckpt/scientific/May-28-2025_15-05-20270c', 'accelerator': <accelerate.accelerator.Accelerator object at 0x2b299149dd90>}
+Wed 28 May 2025 15:05:44 INFO  Model(
+  (model): T5ForConditionalGeneration(
+    (shared): Embedding(1, 128)
+    (encoder): T5Stack(
+      (embed_tokens): Embedding(1, 128)
+      (block): ModuleList(
+        (0): T5Block(
+          (layer): ModuleList(
+            (0): T5LayerSelfAttention(
+              (SelfAttention): T5Attention(
+                (q): Linear(in_features=128, out_features=256, bias=False)
+                (k): Linear(in_features=128, out_features=256, bias=False)
+                (v): Linear(in_features=128, out_features=256, bias=False)
+                (o): Linear(in_features=256, out_features=128, bias=False)
+                (relative_attention_bias): Embedding(32, 4)
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (1): T5LayerFF(
+              (DenseReluDense): T5DenseActDense(
+                (wi): Linear(in_features=128, out_features=512, bias=False)
+                (wo): Linear(in_features=512, out_features=128, bias=False)
+                (dropout): Dropout(p=0.1, inplace=False)
+                (act): ReLU()
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+        )
+        (1-5): 5 x T5Block(
+          (layer): ModuleList(
+            (0): T5LayerSelfAttention(
+              (SelfAttention): T5Attention(
+                (q): Linear(in_features=128, out_features=256, bias=False)
+                (k): Linear(in_features=128, out_features=256, bias=False)
+                (v): Linear(in_features=128, out_features=256, bias=False)
+                (o): Linear(in_features=256, out_features=128, bias=False)
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (1): T5LayerFF(
+              (DenseReluDense): T5DenseActDense(
+                (wi): Linear(in_features=128, out_features=512, bias=False)
+                (wo): Linear(in_features=512, out_features=128, bias=False)
+                (dropout): Dropout(p=0.1, inplace=False)
+                (act): ReLU()
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+        )
+      )
+      (final_layer_norm): T5LayerNorm()
+      (dropout): Dropout(p=0.1, inplace=False)
+    )
+    (decoder): T5Stack(
+      (embed_tokens): Embedding(1, 128)
+      (block): ModuleList(
+        (0): T5Block(
+          (layer): ModuleList(
+            (0): T5LayerSelfAttention(
+              (SelfAttention): T5Attention(
+                (q): Linear(in_features=128, out_features=256, bias=False)
+                (k): Linear(in_features=128, out_features=256, bias=False)
+                (v): Linear(in_features=128, out_features=256, bias=False)
+                (o): Linear(in_features=256, out_features=128, bias=False)
+                (relative_attention_bias): Embedding(32, 4)
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (1): T5LayerCrossAttention(
+              (EncDecAttention): T5Attention(
+                (q): Linear(in_features=128, out_features=256, bias=False)
+                (k): Linear(in_features=128, out_features=256, bias=False)
+                (v): Linear(in_features=128, out_features=256, bias=False)
+                (o): Linear(in_features=256, out_features=128, bias=False)
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (2): T5LayerFF(
+              (DenseReluDense): T5DenseActDense(
+                (wi): Linear(in_features=128, out_features=512, bias=False)
+                (wo): Linear(in_features=512, out_features=128, bias=False)
+                (dropout): Dropout(p=0.1, inplace=False)
+                (act): ReLU()
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+        )
+        (1-5): 5 x T5Block(
+          (layer): ModuleList(
+            (0): T5LayerSelfAttention(
+              (SelfAttention): T5Attention(
+                (q): Linear(in_features=128, out_features=256, bias=False)
+                (k): Linear(in_features=128, out_features=256, bias=False)
+                (v): Linear(in_features=128, out_features=256, bias=False)
+                (o): Linear(in_features=256, out_features=128, bias=False)
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (1): T5LayerCrossAttention(
+              (EncDecAttention): T5Attention(
+                (q): Linear(in_features=128, out_features=256, bias=False)
+                (k): Linear(in_features=128, out_features=256, bias=False)
+                (v): Linear(in_features=128, out_features=256, bias=False)
+                (o): Linear(in_features=256, out_features=128, bias=False)
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (2): T5LayerFF(
+              (DenseReluDense): T5DenseActDense(
+                (wi): Linear(in_features=128, out_features=512, bias=False)
+                (wo): Linear(in_features=512, out_features=128, bias=False)
+                (dropout): Dropout(p=0.1, inplace=False)
+                (act): ReLU()
+              )
+              (layer_norm): T5LayerNorm()
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+        )
+      )
+      (final_layer_norm): T5LayerNorm()
+      (dropout): Dropout(p=0.1, inplace=False)
+    )
+    (lm_head): Linear(in_features=128, out_features=1, bias=False)
+  )
+  (semantic_embedding): Embedding(25849, 256)
+  (token_embeddings): ModuleList(
+    (0-3): 4 x Embedding(256, 128)
+  )
+  (enc_adapter): MLPLayers(
+    (mlp_layers): Sequential(
+      (0): Dropout(p=0.0, inplace=False)
+      (1): Linear(in_features=128, out_features=128, bias=True)
+    )
+  )
+  (dec_adapter): MLPLayers(
+    (mlp_layers): Sequential(
+      (0): Dropout(p=0.0, inplace=False)
+      (1): Linear(in_features=128, out_features=256, bias=True)
+    )
+  )
+)
+Wed 28 May 2025 15:05:44 INFO  RQVAE(
+  (encoder): MLPLayers(
+    (mlp_layers): Sequential(
+      (0): Dropout(p=0.0, inplace=False)
+      (1): Linear(in_features=256, out_features=512, bias=True)
+      (2): ReLU()
+      (3): Dropout(p=0.0, inplace=False)
+      (4): Linear(in_features=512, out_features=256, bias=True)
+      (5): ReLU()
+      (6): Dropout(p=0.0, inplace=False)
+      (7): Linear(in_features=256, out_features=128, bias=True)
+    )
+  )
+  (rq): ResidualVectorQuantizer(
+    (vq_layers): ModuleList(
+      (0-2): 3 x VectorQuantizer(
+        (embedding): Embedding(256, 128)
+      )
+    )
+  )
+  (decoder): MLPLayers(
+    (mlp_layers): Sequential(
+      (0): Dropout(p=0.0, inplace=False)
+      (1): Linear(in_features=128, out_features=256, bias=True)
+      (2): ReLU()
+      (3): Dropout(p=0.0, inplace=False)
+      (4): Linear(in_features=256, out_features=512, bias=True)
+      (5): ReLU()
+      (6): Dropout(p=0.0, inplace=False)
+      (7): Linear(in_features=512, out_features=256, bias=True)
+    )
+  )
+)
+Wed 28 May 2025 15:05:45 INFO  [Epoch -1] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/-1.pt Code balance 0.7718 Used code num of level 1: 256
+Wed 28 May 2025 15:05:45 INFO  [Epoch -1] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/-1.pt Code balance 0.9278 Used code num of level 2: 256
+Wed 28 May 2025 15:05:45 INFO  [Epoch -1] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/-1.pt Code balance 0.9414 Used code num of level 3: 256
+Wed 28 May 2025 15:05:45 INFO  [Epoch -1] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/-1.pt Code confilct {'Max': 63, 'Min': 1, 'Type': 25454, '%': 0.9848}
+Wed 28 May 2025 15:05:46 INFO  [Epoch -1] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 63
+Wed 28 May 2025 15:06:10 INFO  [Epoch 0] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/0.pt Code balance 0.7659 Used code num of level 1: 256
+Wed 28 May 2025 15:06:10 INFO  [Epoch 0] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/0.pt Code balance 0.9254 Used code num of level 2: 256
+Wed 28 May 2025 15:06:10 INFO  [Epoch 0] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/0.pt Code balance 0.941 Used code num of level 3: 256
+Wed 28 May 2025 15:06:10 INFO  [Epoch 0] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/0.pt Code confilct {'Max': 57, 'Min': 1, 'Type': 25458, '%': 0.9849}
+Wed 28 May 2025 15:06:10 INFO  [Epoch 0] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 57
+Wed 28 May 2025 15:06:10 INFO  [Epoch 0] [time: 24.52s, train loss[('loss', 0.0049), ('vq_loss', 0.0049), ('code_loss', 5.6038), ('kl_loss', 0.064), ('dec_cl_loss', 12.8223)]]
+Wed 28 May 2025 15:06:10 INFO  [Epoch 0] REC lr: [0.0] ID lr: [1.27e-05]
+Wed 28 May 2025 15:07:15 INFO  [Epoch 1] [time: 64.62s, train loss[('loss', 4.4544), ('kl_loss', 0.0764), ('code_loss', 4.4544), ('dec_cl_loss', 12.8693)]]
+Wed 28 May 2025 15:07:15 INFO  [Epoch 1] REC lr: [0.0003175] ID lr: [1.27e-05]
+Wed 28 May 2025 15:08:27 INFO  [Epoch 1] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/1.pt
+Wed 28 May 2025 15:08:27 INFO  [Epoch 1] Val Results: {'recall@1': 0.004786, 'recall@5': 0.005198, 'ndcg@5': 0.004985, 'recall@10': 0.005198, 'ndcg@10': 0.004985}
+Wed 28 May 2025 15:08:50 INFO  [Epoch 2] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/2.pt Code balance 0.763 Used code num of level 1: 256
+Wed 28 May 2025 15:08:50 INFO  [Epoch 2] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/2.pt Code balance 0.9217 Used code num of level 2: 256
+Wed 28 May 2025 15:08:50 INFO  [Epoch 2] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/2.pt Code balance 0.9397 Used code num of level 3: 256
+Wed 28 May 2025 15:08:50 INFO  [Epoch 2] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/2.pt Code confilct {'Max': 62, 'Min': 1, 'Type': 25458, '%': 0.9849}
+Wed 28 May 2025 15:08:50 INFO  [Epoch 2] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 62
+Wed 28 May 2025 15:08:50 INFO  [Epoch 2] [time: 22.88s, train loss[('loss', 0.0048), ('vq_loss', 0.0048), ('code_loss', 3.8238), ('kl_loss', 0.0702), ('dec_cl_loss', 13.53)]]
+Wed 28 May 2025 15:08:50 INFO  [Epoch 2] REC lr: [0.0003175] ID lr: [2.54e-05]
+Wed 28 May 2025 15:09:55 INFO  [Epoch 3] [time: 65.33s, train loss[('loss', 3.62), ('kl_loss', 0.071), ('code_loss', 3.62), ('dec_cl_loss', 13.4435)]]
+Wed 28 May 2025 15:09:55 INFO  [Epoch 3] REC lr: [0.000635] ID lr: [2.54e-05]
+Wed 28 May 2025 15:11:08 INFO  [Epoch 3] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/3.pt
+Wed 28 May 2025 15:11:08 INFO  [Epoch 3] Val Results: {'recall@1': 0.00506, 'recall@5': 0.017338, 'ndcg@5': 0.011111, 'recall@10': 0.027381, 'ndcg@10': 0.014365}
+Wed 28 May 2025 15:11:30 INFO  [Epoch 4] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/4.pt Code balance 0.7585 Used code num of level 1: 256
+Wed 28 May 2025 15:11:31 INFO  [Epoch 4] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/4.pt Code balance 0.9155 Used code num of level 2: 256
+Wed 28 May 2025 15:11:31 INFO  [Epoch 4] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/4.pt Code balance 0.9358 Used code num of level 3: 256
+Wed 28 May 2025 15:11:31 INFO  [Epoch 4] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/4.pt Code confilct {'Max': 61, 'Min': 1, 'Type': 25477, '%': 0.9856}
+Wed 28 May 2025 15:11:31 INFO  [Epoch 4] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 61
+Wed 28 May 2025 15:11:31 INFO  [Epoch 4] [time: 23.44s, train loss[('loss', 0.0047), ('vq_loss', 0.0047), ('code_loss', 3.388), ('kl_loss', 0.074), ('dec_cl_loss', 13.3823)]]
+Wed 28 May 2025 15:11:31 INFO  [Epoch 4] REC lr: [0.000635] ID lr: [3.8100000000000005e-05]
+Wed 28 May 2025 15:12:36 INFO  [Epoch 5] [time: 65.47s, train loss[('loss', 3.3337), ('kl_loss', 0.0669), ('code_loss', 3.3337), ('dec_cl_loss', 13.3729)]]
+Wed 28 May 2025 15:12:36 INFO  [Epoch 5] REC lr: [0.0009525] ID lr: [3.8100000000000005e-05]
+Wed 28 May 2025 15:13:49 INFO  [Epoch 5] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/5.pt
+Wed 28 May 2025 15:13:49 INFO  [Epoch 5] Val Results: {'recall@1': 0.005825, 'recall@5': 0.020437, 'ndcg@5': 0.013063, 'recall@10': 0.033618, 'ndcg@10': 0.017305}
+Wed 28 May 2025 15:14:11 INFO  [Epoch 6] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/6.pt Code balance 0.7544 Used code num of level 1: 256
+Wed 28 May 2025 15:14:11 INFO  [Epoch 6] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/6.pt Code balance 0.9072 Used code num of level 2: 256
+Wed 28 May 2025 15:14:11 INFO  [Epoch 6] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/6.pt Code balance 0.9311 Used code num of level 3: 256
+Wed 28 May 2025 15:14:11 INFO  [Epoch 6] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/6.pt Code confilct {'Max': 56, 'Min': 1, 'Type': 25466, '%': 0.9852}
+Wed 28 May 2025 15:14:11 INFO  [Epoch 6] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 56
+Wed 28 May 2025 15:14:11 INFO  [Epoch 6] [time: 22.70s, train loss[('loss', 0.0046), ('vq_loss', 0.0046), ('code_loss', 3.1263), ('kl_loss', 0.0614), ('dec_cl_loss', 13.4748)]]
+Wed 28 May 2025 15:14:11 INFO  [Epoch 6] REC lr: [0.0009525] ID lr: [5.08e-05]
+Wed 28 May 2025 15:15:17 INFO  [Epoch 7] [time: 65.91s, train loss[('loss', 3.1664), ('kl_loss', 0.0576), ('code_loss', 3.1664), ('dec_cl_loss', 13.318)]]
+Wed 28 May 2025 15:15:17 INFO  [Epoch 7] REC lr: [0.00127] ID lr: [5.08e-05]
+Wed 28 May 2025 15:16:30 INFO  [Epoch 7] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/7.pt
+Wed 28 May 2025 15:16:30 INFO  [Epoch 7] Val Results: {'recall@1': 0.006943, 'recall@5': 0.022163, 'ndcg@5': 0.014601, 'recall@10': 0.035697, 'ndcg@10': 0.018963}
+Wed 28 May 2025 15:16:53 INFO  [Epoch 8] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/8.pt Code balance 0.7503 Used code num of level 1: 256
+Wed 28 May 2025 15:16:53 INFO  [Epoch 8] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/8.pt Code balance 0.8945 Used code num of level 2: 256
+Wed 28 May 2025 15:16:53 INFO  [Epoch 8] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/8.pt Code balance 0.9209 Used code num of level 3: 256
+Wed 28 May 2025 15:16:53 INFO  [Epoch 8] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/8.pt Code confilct {'Max': 47, 'Min': 1, 'Type': 25454, '%': 0.9848}
+Wed 28 May 2025 15:16:53 INFO  [Epoch 8] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 47
+Wed 28 May 2025 15:16:53 INFO  [Epoch 8] [time: 22.95s, train loss[('loss', 0.0045), ('vq_loss', 0.0045), ('code_loss', 2.9543), ('kl_loss', 0.0516), ('dec_cl_loss', 13.4131)]]
+Wed 28 May 2025 15:16:53 INFO  [Epoch 8] REC lr: [0.00127] ID lr: [6.35e-05]
+Wed 28 May 2025 15:17:58 INFO  [Epoch 9] [time: 65.32s, train loss[('loss', 3.0664), ('kl_loss', 0.043), ('code_loss', 3.0664), ('dec_cl_loss', 13.3528)]]
+Wed 28 May 2025 15:17:58 INFO  [Epoch 9] REC lr: [0.0015875000000000002] ID lr: [6.35e-05]
+Wed 28 May 2025 15:19:11 INFO  [Epoch 9] Val Results: {'recall@1': 0.006414, 'recall@5': 0.02134, 'ndcg@5': 0.01391, 'recall@10': 0.03603, 'ndcg@10': 0.018611}
+Wed 28 May 2025 15:19:33 INFO  [Epoch 10] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/10.pt Code balance 0.7467 Used code num of level 1: 256
+Wed 28 May 2025 15:19:33 INFO  [Epoch 10] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/10.pt Code balance 0.8773 Used code num of level 2: 256
+Wed 28 May 2025 15:19:34 INFO  [Epoch 10] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/10.pt Code balance 0.9025 Used code num of level 3: 256
+Wed 28 May 2025 15:19:34 INFO  [Epoch 10] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/10.pt Code confilct {'Max': 29, 'Min': 1, 'Type': 25464, '%': 0.9851}
+Wed 28 May 2025 15:19:34 INFO  [Epoch 10] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 29
+Wed 28 May 2025 15:19:34 INFO  [Epoch 10] [time: 23.24s, train loss[('loss', 0.0078), ('vq_loss', 0.0047), ('code_loss', 2.8513), ('kl_loss', 0.0367), ('dec_cl_loss', 10.2687)]]
+Wed 28 May 2025 15:19:34 INFO  [Epoch 10] REC lr: [0.0015875000000000002] ID lr: [7.620000000000001e-05]
+Wed 28 May 2025 15:20:39 INFO  [Epoch 11] [time: 65.46s, train loss[('loss', 3.0523), ('kl_loss', 0.0141), ('code_loss', 3.0493), ('dec_cl_loss', 10.0377)]]
+Wed 28 May 2025 15:20:39 INFO  [Epoch 11] REC lr: [0.001905] ID lr: [7.620000000000001e-05]
+Wed 28 May 2025 15:21:52 INFO  [Epoch 11] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/11.pt
+Wed 28 May 2025 15:21:52 INFO  [Epoch 11] Val Results: {'recall@1': 0.006727, 'recall@5': 0.021908, 'ndcg@5': 0.014256, 'recall@10': 0.03707, 'ndcg@10': 0.019127}
+Wed 28 May 2025 15:22:15 INFO  [Epoch 12] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/12.pt Code balance 0.7406 Used code num of level 1: 256
+Wed 28 May 2025 15:22:15 INFO  [Epoch 12] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/12.pt Code balance 0.8618 Used code num of level 2: 256
+Wed 28 May 2025 15:22:15 INFO  [Epoch 12] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/12.pt Code balance 0.8931 Used code num of level 3: 256
+Wed 28 May 2025 15:22:15 INFO  [Epoch 12] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/12.pt Code confilct {'Max': 30, 'Min': 1, 'Type': 25474, '%': 0.9855}
+Wed 28 May 2025 15:22:15 INFO  [Epoch 12] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 30
+Wed 28 May 2025 15:22:15 INFO  [Epoch 12] [time: 22.92s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.8051), ('kl_loss', 0.0136), ('dec_cl_loss', 9.8706)]]
+Wed 28 May 2025 15:22:15 INFO  [Epoch 12] REC lr: [0.001905] ID lr: [8.89e-05]
+Wed 28 May 2025 15:23:20 INFO  [Epoch 13] [time: 65.50s, train loss[('loss', 2.9894), ('kl_loss', 0.0145), ('code_loss', 2.9864), ('dec_cl_loss', 9.9099)]]
+Wed 28 May 2025 15:23:20 INFO  [Epoch 13] REC lr: [0.0022225] ID lr: [8.89e-05]
+Wed 28 May 2025 15:24:33 INFO  [Epoch 13] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/13.pt
+Wed 28 May 2025 15:24:33 INFO  [Epoch 13] Val Results: {'recall@1': 0.006512, 'recall@5': 0.023752, 'ndcg@5': 0.015101, 'recall@10': 0.037384, 'ndcg@10': 0.019473}
+Wed 28 May 2025 15:24:56 INFO  [Epoch 14] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/14.pt Code balance 0.7382 Used code num of level 1: 256
+Wed 28 May 2025 15:24:56 INFO  [Epoch 14] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/14.pt Code balance 0.8499 Used code num of level 2: 256
+Wed 28 May 2025 15:24:56 INFO  [Epoch 14] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/14.pt Code balance 0.8873 Used code num of level 3: 256
+Wed 28 May 2025 15:24:56 INFO  [Epoch 14] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/14.pt Code confilct {'Max': 45, 'Min': 1, 'Type': 25434, '%': 0.984}
+Wed 28 May 2025 15:24:56 INFO  [Epoch 14] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 45
+Wed 28 May 2025 15:24:56 INFO  [Epoch 14] [time: 23.36s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.756), ('kl_loss', 0.0147), ('dec_cl_loss', 9.7941)]]
+Wed 28 May 2025 15:24:56 INFO  [Epoch 14] REC lr: [0.0022225] ID lr: [9.999989390377952e-05]
+Wed 28 May 2025 15:26:02 INFO  [Epoch 15] [time: 66.13s, train loss[('loss', 2.9411), ('kl_loss', 0.0155), ('code_loss', 2.9381), ('dec_cl_loss', 9.8397)]]
+Wed 28 May 2025 15:26:02 INFO  [Epoch 15] REC lr: [0.00254] ID lr: [9.999989390377952e-05]
+Wed 28 May 2025 15:27:15 INFO  [Epoch 15] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/15.pt
+Wed 28 May 2025 15:27:15 INFO  [Epoch 15] Val Results: {'recall@1': 0.007002, 'recall@5': 0.022909, 'ndcg@5': 0.014845, 'recall@10': 0.03805, 'ndcg@10': 0.019703}
+Wed 28 May 2025 15:27:37 INFO  [Epoch 16] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/16.pt Code balance 0.7304 Used code num of level 1: 256
+Wed 28 May 2025 15:27:38 INFO  [Epoch 16] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/16.pt Code balance 0.8375 Used code num of level 2: 256
+Wed 28 May 2025 15:27:38 INFO  [Epoch 16] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/16.pt Code balance 0.8831 Used code num of level 3: 256
+Wed 28 May 2025 15:27:38 INFO  [Epoch 16] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/16.pt Code confilct {'Max': 72, 'Min': 1, 'Type': 25446, '%': 0.9844}
+Wed 28 May 2025 15:27:38 INFO  [Epoch 16] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 72
+Wed 28 May 2025 15:27:38 INFO  [Epoch 16] [time: 23.06s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.7119), ('kl_loss', 0.0156), ('dec_cl_loss', 9.7271)]]
+Wed 28 May 2025 15:27:38 INFO  [Epoch 16] REC lr: [0.00254] ID lr: [9.999152538636093e-05]
+Wed 28 May 2025 15:28:43 INFO  [Epoch 17] [time: 65.51s, train loss[('loss', 2.9056), ('kl_loss', 0.0163), ('code_loss', 2.9027), ('dec_cl_loss', 9.792)]]
+Wed 28 May 2025 15:28:43 INFO  [Epoch 17] REC lr: [0.0028575000000000002] ID lr: [9.999152538636093e-05]
+Wed 28 May 2025 15:29:56 INFO  [Epoch 17] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/17.pt
+Wed 28 May 2025 15:29:56 INFO  [Epoch 17] Val Results: {'recall@1': 0.007355, 'recall@5': 0.024595, 'ndcg@5': 0.015817, 'recall@10': 0.039992, 'ndcg@10': 0.020767}
+Wed 28 May 2025 15:30:18 INFO  [Epoch 18] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/18.pt Code balance 0.7229 Used code num of level 1: 256
+Wed 28 May 2025 15:30:19 INFO  [Epoch 18] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/18.pt Code balance 0.8263 Used code num of level 2: 256
+Wed 28 May 2025 15:30:19 INFO  [Epoch 18] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/18.pt Code balance 0.8753 Used code num of level 3: 256
+Wed 28 May 2025 15:30:19 INFO  [Epoch 18] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/18.pt Code confilct {'Max': 53, 'Min': 1, 'Type': 25445, '%': 0.9844}
+Wed 28 May 2025 15:30:19 INFO  [Epoch 18] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 53
+Wed 28 May 2025 15:30:19 INFO  [Epoch 18] [time: 22.95s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.6731), ('kl_loss', 0.0167), ('dec_cl_loss', 9.6805)]]
+Wed 28 May 2025 15:30:19 INFO  [Epoch 18] REC lr: [0.0028575000000000002] ID lr: [9.996979047532001e-05]
+Wed 28 May 2025 15:31:24 INFO  [Epoch 19] [time: 65.35s, train loss[('loss', 2.8748), ('kl_loss', 0.017), ('code_loss', 2.8719), ('dec_cl_loss', 9.7595)]]
+Wed 28 May 2025 15:31:24 INFO  [Epoch 19] REC lr: [0.0031750000000000003] ID lr: [9.996979047532001e-05]
+Wed 28 May 2025 15:32:36 INFO  [Epoch 19] Val Results: {'recall@1': 0.007198, 'recall@5': 0.024223, 'ndcg@5': 0.015636, 'recall@10': 0.039168, 'ndcg@10': 0.020464}
+Wed 28 May 2025 15:32:59 INFO  [Epoch 20] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/20.pt Code balance 0.7197 Used code num of level 1: 256
+Wed 28 May 2025 15:32:59 INFO  [Epoch 20] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/20.pt Code balance 0.8206 Used code num of level 2: 256
+Wed 28 May 2025 15:32:59 INFO  [Epoch 20] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/20.pt Code balance 0.8773 Used code num of level 3: 256
+Wed 28 May 2025 15:32:59 INFO  [Epoch 20] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/20.pt Code confilct {'Max': 79, 'Min': 1, 'Type': 25419, '%': 0.9834}
+Wed 28 May 2025 15:32:59 INFO  [Epoch 20] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 79
+Wed 28 May 2025 15:32:59 INFO  [Epoch 20] [time: 23.01s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.6498), ('kl_loss', 0.0169), ('dec_cl_loss', 9.6464)]]
+Wed 28 May 2025 15:32:59 INFO  [Epoch 20] REC lr: [0.0031750000000000003] ID lr: [9.993469498198924e-05]
+Wed 28 May 2025 15:34:05 INFO  [Epoch 21] [time: 65.63s, train loss[('loss', 2.8398), ('kl_loss', 0.0176), ('code_loss', 2.8368), ('dec_cl_loss', 9.7254)]]
+Wed 28 May 2025 15:34:05 INFO  [Epoch 21] REC lr: [0.0034925] ID lr: [9.993469498198924e-05]
+Wed 28 May 2025 15:35:17 INFO  [Epoch 21] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/21.pt
+Wed 28 May 2025 15:35:17 INFO  [Epoch 21] Val Results: {'recall@1': 0.00759, 'recall@5': 0.025203, 'ndcg@5': 0.016394, 'recall@10': 0.040934, 'ndcg@10': 0.021441}
+Wed 28 May 2025 15:35:41 INFO  [Epoch 22] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/22.pt Code balance 0.7174 Used code num of level 1: 256
+Wed 28 May 2025 15:35:41 INFO  [Epoch 22] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/22.pt Code balance 0.8133 Used code num of level 2: 256
+Wed 28 May 2025 15:35:41 INFO  [Epoch 22] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/22.pt Code balance 0.8709 Used code num of level 3: 256
+Wed 28 May 2025 15:35:41 INFO  [Epoch 22] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/22.pt Code confilct {'Max': 78, 'Min': 1, 'Type': 25419, '%': 0.9834}
+Wed 28 May 2025 15:35:41 INFO  [Epoch 22] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 78
+Wed 28 May 2025 15:35:41 INFO  [Epoch 22] [time: 23.45s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.6106), ('kl_loss', 0.0178), ('dec_cl_loss', 9.6206)]]
+Wed 28 May 2025 15:35:41 INFO  [Epoch 22] REC lr: [0.0034925] ID lr: [9.988624828996263e-05]
+Wed 28 May 2025 15:36:47 INFO  [Epoch 23] [time: 66.06s, train loss[('loss', 2.8182), ('kl_loss', 0.0183), ('code_loss', 2.8153), ('dec_cl_loss', 9.7054)]]
+Wed 28 May 2025 15:36:47 INFO  [Epoch 23] REC lr: [0.00381] ID lr: [9.988624828996263e-05]
+Wed 28 May 2025 15:37:59 INFO  [Epoch 23] Val Results: {'recall@1': 0.007022, 'recall@5': 0.02387, 'ndcg@5': 0.015353, 'recall@10': 0.039855, 'ndcg@10': 0.02048}
+Wed 28 May 2025 15:38:22 INFO  [Epoch 24] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/24.pt Code balance 0.712 Used code num of level 1: 256
+Wed 28 May 2025 15:38:22 INFO  [Epoch 24] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/24.pt Code balance 0.8085 Used code num of level 2: 256
+Wed 28 May 2025 15:38:22 INFO  [Epoch 24] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/24.pt Code balance 0.8724 Used code num of level 3: 256
+Wed 28 May 2025 15:38:22 INFO  [Epoch 24] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/24.pt Code confilct {'Max': 91, 'Min': 1, 'Type': 25416, '%': 0.9833}
+Wed 28 May 2025 15:38:22 INFO  [Epoch 24] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 91
+Wed 28 May 2025 15:38:22 INFO  [Epoch 24] [time: 22.92s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.5856), ('kl_loss', 0.0184), ('dec_cl_loss', 9.5997)]]
+Wed 28 May 2025 15:38:22 INFO  [Epoch 24] REC lr: [0.00381] ID lr: [9.982446335258677e-05]
+Wed 28 May 2025 15:39:28 INFO  [Epoch 25] [time: 65.49s, train loss[('loss', 2.7935), ('kl_loss', 0.0188), ('code_loss', 2.7906), ('dec_cl_loss', 9.6838)]]
+Wed 28 May 2025 15:39:28 INFO  [Epoch 25] REC lr: [0.0041275] ID lr: [9.982446335258677e-05]
+Wed 28 May 2025 15:40:40 INFO  [Epoch 25] Val Results: {'recall@1': 0.007453, 'recall@5': 0.02434, 'ndcg@5': 0.01577, 'recall@10': 0.040365, 'ndcg@10': 0.020922}
+Wed 28 May 2025 15:41:02 INFO  [Epoch 26] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/26.pt Code balance 0.7067 Used code num of level 1: 256
+Wed 28 May 2025 15:41:02 INFO  [Epoch 26] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/26.pt Code balance 0.8049 Used code num of level 2: 256
+Wed 28 May 2025 15:41:02 INFO  [Epoch 26] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/26.pt Code balance 0.8671 Used code num of level 3: 256
+Wed 28 May 2025 15:41:02 INFO  [Epoch 26] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/26.pt Code confilct {'Max': 84, 'Min': 1, 'Type': 25407, '%': 0.9829}
+Wed 28 May 2025 15:41:03 INFO  [Epoch 26] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 84
+Wed 28 May 2025 15:41:03 INFO  [Epoch 26] [time: 22.82s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.565), ('kl_loss', 0.0186), ('dec_cl_loss', 9.5905)]]
+Wed 28 May 2025 15:41:03 INFO  [Epoch 26] REC lr: [0.0041275] ID lr: [9.974935668949749e-05]
+Wed 28 May 2025 15:42:08 INFO  [Epoch 27] [time: 65.74s, train loss[('loss', 2.7715), ('kl_loss', 0.0193), ('code_loss', 2.7686), ('dec_cl_loss', 9.6711)]]
+Wed 28 May 2025 15:42:08 INFO  [Epoch 27] REC lr: [0.004445] ID lr: [9.974935668949749e-05]
+Wed 28 May 2025 15:43:21 INFO  [Epoch 27] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/27.pt
+Wed 28 May 2025 15:43:21 INFO  [Epoch 27] Val Results: {'recall@1': 0.007787, 'recall@5': 0.026302, 'ndcg@5': 0.017049, 'recall@10': 0.04215, 'ndcg@10': 0.022156}
+Wed 28 May 2025 15:43:44 INFO  [Epoch 28] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/28.pt Code balance 0.7015 Used code num of level 1: 256
+Wed 28 May 2025 15:43:44 INFO  [Epoch 28] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/28.pt Code balance 0.7946 Used code num of level 2: 256
+Wed 28 May 2025 15:43:44 INFO  [Epoch 28] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/28.pt Code balance 0.8651 Used code num of level 3: 256
+Wed 28 May 2025 15:43:44 INFO  [Epoch 28] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/28.pt Code confilct {'Max': 87, 'Min': 1, 'Type': 25402, '%': 0.9827}
+Wed 28 May 2025 15:43:44 INFO  [Epoch 28] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 87
+Wed 28 May 2025 15:43:44 INFO  [Epoch 28] [time: 22.92s, train loss[('loss', 0.0074), ('vq_loss', 0.0045), ('code_loss', 2.5425), ('kl_loss', 0.0191), ('dec_cl_loss', 9.5605)]]
+Wed 28 May 2025 15:43:44 INFO  [Epoch 28] REC lr: [0.004445] ID lr: [9.96609483822029e-05]
+Wed 28 May 2025 15:44:50 INFO  [Epoch 29] [time: 65.91s, train loss[('loss', 2.7612), ('kl_loss', 0.0196), ('code_loss', 2.7583), ('dec_cl_loss', 9.6569)]]
+Wed 28 May 2025 15:44:50 INFO  [Epoch 29] REC lr: [0.0047625] ID lr: [9.96609483822029e-05]
+Wed 28 May 2025 15:46:03 INFO  [Epoch 29] Val Results: {'recall@1': 0.007434, 'recall@5': 0.02587, 'ndcg@5': 0.016672, 'recall@10': 0.040286, 'ndcg@10': 0.021315}
+Wed 28 May 2025 15:46:25 INFO  [Epoch 30] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/30.pt Code balance 0.6994 Used code num of level 1: 256
+Wed 28 May 2025 15:46:25 INFO  [Epoch 30] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/30.pt Code balance 0.7912 Used code num of level 2: 256
+Wed 28 May 2025 15:46:25 INFO  [Epoch 30] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/30.pt Code balance 0.8689 Used code num of level 3: 256
+Wed 28 May 2025 15:46:25 INFO  [Epoch 30] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/30.pt Code confilct {'Max': 83, 'Min': 1, 'Type': 25424, '%': 0.9836}
+Wed 28 May 2025 15:46:25 INFO  [Epoch 30] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 83
+Wed 28 May 2025 15:46:25 INFO  [Epoch 30] [time: 22.91s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.5283), ('kl_loss', 0.0195), ('dec_cl_loss', 9.5498)]]
+Wed 28 May 2025 15:46:25 INFO  [Epoch 30] REC lr: [0.0047625] ID lr: [9.955926206871413e-05]
+Wed 28 May 2025 15:47:31 INFO  [Epoch 31] [time: 65.74s, train loss[('loss', 2.7464), ('kl_loss', 0.0202), ('code_loss', 2.7435), ('dec_cl_loss', 9.6445)]]
+Wed 28 May 2025 15:47:31 INFO  [Epoch 31] REC lr: [0.004999994695188976] ID lr: [9.955926206871413e-05]
+Wed 28 May 2025 15:48:43 INFO  [Epoch 31] Val Results: {'recall@1': 0.007414, 'recall@5': 0.026027, 'ndcg@5': 0.016616, 'recall@10': 0.041855, 'ndcg@10': 0.021693}
+Wed 28 May 2025 15:49:06 INFO  [Epoch 32] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/32.pt Code balance 0.6964 Used code num of level 1: 256
+Wed 28 May 2025 15:49:06 INFO  [Epoch 32] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/32.pt Code balance 0.7856 Used code num of level 2: 256
+Wed 28 May 2025 15:49:06 INFO  [Epoch 32] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/32.pt Code balance 0.8695 Used code num of level 3: 256
+Wed 28 May 2025 15:49:06 INFO  [Epoch 32] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/32.pt Code confilct {'Max': 87, 'Min': 1, 'Type': 25446, '%': 0.9844}
+Wed 28 May 2025 15:49:06 INFO  [Epoch 32] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 87
+Wed 28 May 2025 15:49:06 INFO  [Epoch 32] [time: 23.21s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.5173), ('kl_loss', 0.0199), ('dec_cl_loss', 9.5316)]]
+Wed 28 May 2025 15:49:06 INFO  [Epoch 32] REC lr: [0.004999994695188976] ID lr: [9.944432493722524e-05]
+Wed 28 May 2025 15:50:12 INFO  [Epoch 33] [time: 65.40s, train loss[('loss', 2.7278), ('kl_loss', 0.0207), ('code_loss', 2.7249), ('dec_cl_loss', 9.6294)]]
+Wed 28 May 2025 15:50:12 INFO  [Epoch 33] REC lr: [0.00499986903339454] ID lr: [9.944432493722524e-05]
+Wed 28 May 2025 15:51:24 INFO  [Epoch 33] Val Results: {'recall@1': 0.007512, 'recall@5': 0.025949, 'ndcg@5': 0.016568, 'recall@10': 0.041169, 'ndcg@10': 0.021482}
+Wed 28 May 2025 15:51:47 INFO  [Epoch 34] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/34.pt Code balance 0.6913 Used code num of level 1: 256
+Wed 28 May 2025 15:51:47 INFO  [Epoch 34] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/34.pt Code balance 0.782 Used code num of level 2: 256
+Wed 28 May 2025 15:51:47 INFO  [Epoch 34] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/34.pt Code balance 0.8608 Used code num of level 3: 256
+Wed 28 May 2025 15:51:47 INFO  [Epoch 34] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/34.pt Code confilct {'Max': 81, 'Min': 1, 'Type': 25442, '%': 0.9843}
+Wed 28 May 2025 15:51:47 INFO  [Epoch 34] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 81
+Wed 28 May 2025 15:51:47 INFO  [Epoch 34] [time: 22.95s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.501), ('kl_loss', 0.0208), ('dec_cl_loss', 9.5276)]]
+Wed 28 May 2025 15:51:47 INFO  [Epoch 34] REC lr: [0.00499986903339454] ID lr: [9.931616771884372e-05]
+Wed 28 May 2025 15:52:52 INFO  [Epoch 35] [time: 65.38s, train loss[('loss', 2.7142), ('kl_loss', 0.0207), ('code_loss', 2.7113), ('dec_cl_loss', 9.6133)]]
+Wed 28 May 2025 15:52:52 INFO  [Epoch 35] REC lr: [0.0049995762693180465] ID lr: [9.931616771884372e-05]
+Wed 28 May 2025 15:54:04 INFO  [Epoch 35] Val Results: {'recall@1': 0.007845, 'recall@5': 0.026733, 'ndcg@5': 0.017268, 'recall@10': 0.04162, 'ndcg@10': 0.022057}
+Wed 28 May 2025 15:54:27 INFO  [Epoch 36] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/36.pt Code balance 0.6893 Used code num of level 1: 256
+Wed 28 May 2025 15:54:27 INFO  [Epoch 36] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/36.pt Code balance 0.7796 Used code num of level 2: 256
+Wed 28 May 2025 15:54:27 INFO  [Epoch 36] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/36.pt Code balance 0.8568 Used code num of level 3: 256
+Wed 28 May 2025 15:54:27 INFO  [Epoch 36] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/36.pt Code confilct {'Max': 46, 'Min': 1, 'Type': 25432, '%': 0.9839}
+Wed 28 May 2025 15:54:27 INFO  [Epoch 36] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 46
+Wed 28 May 2025 15:54:27 INFO  [Epoch 36] [time: 22.68s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.4885), ('kl_loss', 0.0205), ('dec_cl_loss', 9.5132)]]
+Wed 28 May 2025 15:54:27 INFO  [Epoch 36] REC lr: [0.0049995762693180465] ID lr: [9.91748246793739e-05]
+Wed 28 May 2025 15:55:32 INFO  [Epoch 37] [time: 65.45s, train loss[('loss', 2.6961), ('kl_loss', 0.0209), ('code_loss', 2.6932), ('dec_cl_loss', 9.597)]]
+Wed 28 May 2025 15:55:32 INFO  [Epoch 37] REC lr: [0.004999116422529137] ID lr: [9.91748246793739e-05]
+Wed 28 May 2025 15:56:44 INFO  [Epoch 37] Val Results: {'recall@1': 0.007865, 'recall@5': 0.026655, 'ndcg@5': 0.017219, 'recall@10': 0.041875, 'ndcg@10': 0.022104}
+Wed 28 May 2025 15:57:08 INFO  [Epoch 38] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/38.pt Code balance 0.6884 Used code num of level 1: 256
+Wed 28 May 2025 15:57:08 INFO  [Epoch 38] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/38.pt Code balance 0.7801 Used code num of level 2: 256
+Wed 28 May 2025 15:57:08 INFO  [Epoch 38] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/38.pt Code balance 0.8616 Used code num of level 3: 256
+Wed 28 May 2025 15:57:08 INFO  [Epoch 38] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/38.pt Code confilct {'Max': 69, 'Min': 1, 'Type': 25408, '%': 0.983}
+Wed 28 May 2025 15:57:08 INFO  [Epoch 38] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 69
+Wed 28 May 2025 15:57:08 INFO  [Epoch 38] [time: 23.49s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.4705), ('kl_loss', 0.0207), ('dec_cl_loss', 9.4885)]]
+Wed 28 May 2025 15:57:08 INFO  [Epoch 38] REC lr: [0.004999116422529137] ID lr: [9.902033361015515e-05]
+Wed 28 May 2025 15:58:13 INFO  [Epoch 39] [time: 65.57s, train loss[('loss', 2.6869), ('kl_loss', 0.0214), ('code_loss', 2.6841), ('dec_cl_loss', 9.5867)]]
+Wed 28 May 2025 15:58:13 INFO  [Epoch 39] REC lr: [0.004998489523766] ID lr: [9.902033361015515e-05]
+Wed 28 May 2025 15:59:26 INFO  [Epoch 39] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/39.pt
+Wed 28 May 2025 15:59:26 INFO  [Epoch 39] Val Results: {'recall@1': 0.007767, 'recall@5': 0.027341, 'ndcg@5': 0.017513, 'recall@10': 0.042875, 'ndcg@10': 0.022518}
+Wed 28 May 2025 15:59:49 INFO  [Epoch 40] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/40.pt Code balance 0.6847 Used code num of level 1: 256
+Wed 28 May 2025 15:59:49 INFO  [Epoch 40] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/40.pt Code balance 0.7799 Used code num of level 2: 256
+Wed 28 May 2025 15:59:49 INFO  [Epoch 40] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/40.pt Code balance 0.8615 Used code num of level 3: 256
+Wed 28 May 2025 15:59:49 INFO  [Epoch 40] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/40.pt Code confilct {'Max': 75, 'Min': 1, 'Type': 25418, '%': 0.9834}
+Wed 28 May 2025 15:59:49 INFO  [Epoch 40] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 75
+Wed 28 May 2025 15:59:49 INFO  [Epoch 40] [time: 22.91s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.4558), ('kl_loss', 0.021), ('dec_cl_loss', 9.4818)]]
+Wed 28 May 2025 15:59:49 INFO  [Epoch 40] REC lr: [0.004998489523766] ID lr: [9.885273581795749e-05]
+Wed 28 May 2025 16:00:54 INFO  [Epoch 41] [time: 64.95s, train loss[('loss', 2.6671), ('kl_loss', 0.0217), ('code_loss', 2.6642), ('dec_cl_loss', 9.5758)]]
+Wed 28 May 2025 16:00:54 INFO  [Epoch 41] REC lr: [0.004997695614933319] ID lr: [9.885273581795749e-05]
+Wed 28 May 2025 16:02:06 INFO  [Epoch 41] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/41.pt
+Wed 28 May 2025 16:02:06 INFO  [Epoch 41] Val Results: {'recall@1': 0.008767, 'recall@5': 0.028322, 'ndcg@5': 0.018426, 'recall@10': 0.043974, 'ndcg@10': 0.023483}
+Wed 28 May 2025 16:02:29 INFO  [Epoch 42] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/42.pt Code balance 0.679 Used code num of level 1: 256
+Wed 28 May 2025 16:02:29 INFO  [Epoch 42] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/42.pt Code balance 0.7736 Used code num of level 2: 256
+Wed 28 May 2025 16:02:29 INFO  [Epoch 42] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/42.pt Code balance 0.8557 Used code num of level 3: 256
+Wed 28 May 2025 16:02:29 INFO  [Epoch 42] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/42.pt Code confilct {'Max': 78, 'Min': 1, 'Type': 25425, '%': 0.9836}
+Wed 28 May 2025 16:02:29 INFO  [Epoch 42] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 78
+Wed 28 May 2025 16:02:29 INFO  [Epoch 42] [time: 23.18s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.4444), ('kl_loss', 0.0213), ('dec_cl_loss', 9.4739)]]
+Wed 28 May 2025 16:02:29 INFO  [Epoch 42] REC lr: [0.004997695614933319] ID lr: [9.867207611393728e-05]
+Wed 28 May 2025 16:03:35 INFO  [Epoch 43] [time: 65.56s, train loss[('loss', 2.6575), ('kl_loss', 0.0219), ('code_loss', 2.6546), ('dec_cl_loss', 9.5657)]]
+Wed 28 May 2025 16:03:35 INFO  [Epoch 43] REC lr: [0.004996734749099462] ID lr: [9.867207611393728e-05]
+Wed 28 May 2025 16:04:47 INFO  [Epoch 43] Val Results: {'recall@1': 0.008414, 'recall@5': 0.027636, 'ndcg@5': 0.018042, 'recall@10': 0.043503, 'ndcg@10': 0.023146}
+Wed 28 May 2025 16:05:10 INFO  [Epoch 44] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/44.pt Code balance 0.6789 Used code num of level 1: 256
+Wed 28 May 2025 16:05:10 INFO  [Epoch 44] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/44.pt Code balance 0.7738 Used code num of level 2: 256
+Wed 28 May 2025 16:05:10 INFO  [Epoch 44] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/44.pt Code balance 0.8615 Used code num of level 3: 256
+Wed 28 May 2025 16:05:10 INFO  [Epoch 44] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/44.pt Code confilct {'Max': 65, 'Min': 1, 'Type': 25418, '%': 0.9834}
+Wed 28 May 2025 16:05:11 INFO  [Epoch 44] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 65
+Wed 28 May 2025 16:05:11 INFO  [Epoch 44] [time: 23.32s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.4286), ('kl_loss', 0.0215), ('dec_cl_loss', 9.4605)]]
+Wed 28 May 2025 16:05:11 INFO  [Epoch 44] REC lr: [0.004996734749099462] ID lr: [9.84784028016559e-05]
+Wed 28 May 2025 16:06:17 INFO  [Epoch 45] [time: 66.01s, train loss[('loss', 2.6501), ('kl_loss', 0.0223), ('code_loss', 2.6472), ('dec_cl_loss', 9.5576)]]
+Wed 28 May 2025 16:06:17 INFO  [Epoch 45] REC lr: [0.004995606990492944] ID lr: [9.84784028016559e-05]
+Wed 28 May 2025 16:07:29 INFO  [Epoch 45] Val Results: {'recall@1': 0.007257, 'recall@5': 0.027204, 'ndcg@5': 0.017199, 'recall@10': 0.043993, 'ndcg@10': 0.022609}
+Wed 28 May 2025 16:07:52 INFO  [Epoch 46] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/46.pt Code balance 0.6766 Used code num of level 1: 256
+Wed 28 May 2025 16:07:52 INFO  [Epoch 46] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/46.pt Code balance 0.7708 Used code num of level 2: 256
+Wed 28 May 2025 16:07:52 INFO  [Epoch 46] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/46.pt Code balance 0.8601 Used code num of level 3: 256
+Wed 28 May 2025 16:07:52 INFO  [Epoch 46] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/46.pt Code confilct {'Max': 47, 'Min': 1, 'Type': 25400, '%': 0.9827}
+Wed 28 May 2025 16:07:52 INFO  [Epoch 46] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 47
+Wed 28 May 2025 16:07:52 INFO  [Epoch 46] [time: 22.98s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.4209), ('kl_loss', 0.0217), ('dec_cl_loss', 9.4582)]]
+Wed 28 May 2025 16:07:52 INFO  [Epoch 46] REC lr: [0.004995606990492944] ID lr: [9.827176766416472e-05]
+Wed 28 May 2025 16:08:57 INFO  [Epoch 47] [time: 65.40s, train loss[('loss', 2.6413), ('kl_loss', 0.0222), ('code_loss', 2.6384), ('dec_cl_loss', 9.5482)]]
+Wed 28 May 2025 16:08:57 INFO  [Epoch 47] REC lr: [0.004994312414498131] ID lr: [9.827176766416472e-05]
+Wed 28 May 2025 16:10:10 INFO  [Epoch 47] Val Results: {'recall@1': 0.007924, 'recall@5': 0.027439, 'ndcg@5': 0.017555, 'recall@10': 0.043209, 'ndcg@10': 0.022642}
+Wed 28 May 2025 16:10:33 INFO  [Epoch 48] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/48.pt Code balance 0.6738 Used code num of level 1: 256
+Wed 28 May 2025 16:10:33 INFO  [Epoch 48] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/48.pt Code balance 0.7611 Used code num of level 2: 256
+Wed 28 May 2025 16:10:33 INFO  [Epoch 48] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/48.pt Code balance 0.8605 Used code num of level 3: 256
+Wed 28 May 2025 16:10:33 INFO  [Epoch 48] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/48.pt Code confilct {'Max': 51, 'Min': 1, 'Type': 25402, '%': 0.9827}
+Wed 28 May 2025 16:10:33 INFO  [Epoch 48] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 51
+Wed 28 May 2025 16:10:33 INFO  [Epoch 48] [time: 22.97s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.4166), ('kl_loss', 0.0217), ('dec_cl_loss', 9.4429)]]
+Wed 28 May 2025 16:10:33 INFO  [Epoch 48] REC lr: [0.004994312414498131] ID lr: [9.805222595015963e-05]
+Wed 28 May 2025 16:11:38 INFO  [Epoch 49] [time: 65.45s, train loss[('loss', 2.636), ('kl_loss', 0.0225), ('code_loss', 2.6331), ('dec_cl_loss', 9.5423)]]
+Wed 28 May 2025 16:11:38 INFO  [Epoch 49] REC lr: [0.004992851107650195] ID lr: [9.805222595015963e-05]
+Wed 28 May 2025 16:12:50 INFO  [Epoch 49] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/49.pt
+Wed 28 May 2025 16:12:50 INFO  [Epoch 49] Val Results: {'recall@1': 0.008218, 'recall@5': 0.028087, 'ndcg@5': 0.01811, 'recall@10': 0.04519, 'ndcg@10': 0.023599}
+Wed 28 May 2025 16:13:13 INFO  [Epoch 50] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/50.pt Code balance 0.6753 Used code num of level 1: 256
+Wed 28 May 2025 16:13:13 INFO  [Epoch 50] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/50.pt Code balance 0.7668 Used code num of level 2: 256
+Wed 28 May 2025 16:13:13 INFO  [Epoch 50] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/50.pt Code balance 0.8658 Used code num of level 3: 256
+Wed 28 May 2025 16:13:13 INFO  [Epoch 50] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/50.pt Code confilct {'Max': 56, 'Min': 1, 'Type': 25427, '%': 0.9837}
+Wed 28 May 2025 16:13:14 INFO  [Epoch 50] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 56
+Wed 28 May 2025 16:13:14 INFO  [Epoch 50] [time: 23.25s, train loss[('loss', 0.0074), ('vq_loss', 0.0046), ('code_loss', 2.407), ('kl_loss', 0.0226), ('dec_cl_loss', 9.4361)]]
+Wed 28 May 2025 16:13:14 INFO  [Epoch 50] REC lr: [0.004992851107650195] ID lr: [9.781983635920907e-05]
+Wed 28 May 2025 16:14:19 INFO  [Epoch 51] [time: 65.13s, train loss[('loss', 2.6257), ('kl_loss', 0.0227), ('code_loss', 2.6228), ('dec_cl_loss', 9.5355)]]
+Wed 28 May 2025 16:14:19 INFO  [Epoch 51] REC lr: [0.004991223167629339] ID lr: [9.781983635920907e-05]
+Wed 28 May 2025 16:15:31 INFO  [Epoch 51] Val Results: {'recall@1': 0.008159, 'recall@5': 0.028263, 'ndcg@5': 0.01809, 'recall@10': 0.044327, 'ndcg@10': 0.023264}
+Wed 28 May 2025 16:15:53 INFO  [Epoch 52] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/52.pt Code balance 0.6703 Used code num of level 1: 256
+Wed 28 May 2025 16:15:53 INFO  [Epoch 52] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/52.pt Code balance 0.7578 Used code num of level 2: 256
+Wed 28 May 2025 16:15:53 INFO  [Epoch 52] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/52.pt Code balance 0.8581 Used code num of level 3: 256
+Wed 28 May 2025 16:15:53 INFO  [Epoch 52] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/52.pt Code confilct {'Max': 60, 'Min': 1, 'Type': 25392, '%': 0.9824}
+Wed 28 May 2025 16:15:54 INFO  [Epoch 52] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 60
+Wed 28 May 2025 16:15:54 INFO  [Epoch 52] [time: 22.47s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3964), ('kl_loss', 0.0237), ('dec_cl_loss', 9.4286)]]
+Wed 28 May 2025 16:15:54 INFO  [Epoch 52] REC lr: [0.004991223167629339] ID lr: [9.757466102605934e-05]
+Wed 28 May 2025 16:16:59 INFO  [Epoch 53] [time: 65.77s, train loss[('loss', 2.621), ('kl_loss', 0.0231), ('code_loss', 2.6181), ('dec_cl_loss', 9.5263)]]
+Wed 28 May 2025 16:16:59 INFO  [Epoch 53] REC lr: [0.0049894287032542575] ID lr: [9.757466102605934e-05]
+Wed 28 May 2025 16:18:12 INFO  [Epoch 53] Val Results: {'recall@1': 0.007512, 'recall@5': 0.027145, 'ndcg@5': 0.017365, 'recall@10': 0.042915, 'ndcg@10': 0.022437}
+Wed 28 May 2025 16:18:35 INFO  [Epoch 54] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/54.pt Code balance 0.6706 Used code num of level 1: 256
+Wed 28 May 2025 16:18:35 INFO  [Epoch 54] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/54.pt Code balance 0.7605 Used code num of level 2: 256
+Wed 28 May 2025 16:18:35 INFO  [Epoch 54] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/54.pt Code balance 0.8637 Used code num of level 3: 256
+Wed 28 May 2025 16:18:35 INFO  [Epoch 54] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/54.pt Code confilct {'Max': 44, 'Min': 1, 'Type': 25388, '%': 0.9822}
+Wed 28 May 2025 16:18:35 INFO  [Epoch 54] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 44
+Wed 28 May 2025 16:18:35 INFO  [Epoch 54] [time: 23.15s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3908), ('kl_loss', 0.0229), ('dec_cl_loss', 9.4207)]]
+Wed 28 May 2025 16:18:35 INFO  [Epoch 54] REC lr: [0.0049894287032542575] ID lr: [9.73167655040214e-05]
+Wed 28 May 2025 16:19:40 INFO  [Epoch 55] [time: 64.96s, train loss[('loss', 2.6072), ('kl_loss', 0.0239), ('code_loss', 2.6043), ('dec_cl_loss', 9.5237)]]
+Wed 28 May 2025 16:19:40 INFO  [Epoch 55] REC lr: [0.004987467834474874] ID lr: [9.73167655040214e-05]
+Wed 28 May 2025 16:20:52 INFO  [Epoch 55] Val Results: {'recall@1': 0.008297, 'recall@5': 0.028499, 'ndcg@5': 0.018348, 'recall@10': 0.044091, 'ndcg@10': 0.023343}
+Wed 28 May 2025 16:21:15 INFO  [Epoch 56] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/56.pt Code balance 0.6705 Used code num of level 1: 256
+Wed 28 May 2025 16:21:15 INFO  [Epoch 56] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/56.pt Code balance 0.7562 Used code num of level 2: 256
+Wed 28 May 2025 16:21:15 INFO  [Epoch 56] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/56.pt Code balance 0.8668 Used code num of level 3: 256
+Wed 28 May 2025 16:21:15 INFO  [Epoch 56] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/56.pt Code confilct {'Max': 37, 'Min': 1, 'Type': 25409, '%': 0.983}
+Wed 28 May 2025 16:21:15 INFO  [Epoch 56] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 37
+Wed 28 May 2025 16:21:15 INFO  [Epoch 56] [time: 22.66s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3786), ('kl_loss', 0.0234), ('dec_cl_loss', 9.4176)]]
+Wed 28 May 2025 16:21:15 INFO  [Epoch 56] REC lr: [0.004987467834474874] ID lr: [9.704621874744372e-05]
+Wed 28 May 2025 16:22:21 INFO  [Epoch 57] [time: 65.55s, train loss[('loss', 2.5977), ('kl_loss', 0.0236), ('code_loss', 2.5948), ('dec_cl_loss', 9.5148)]]
+Wed 28 May 2025 16:22:21 INFO  [Epoch 57] REC lr: [0.004985340692364313] ID lr: [9.704621874744372e-05]
+Wed 28 May 2025 16:23:33 INFO  [Epoch 57] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/57.pt
+Wed 28 May 2025 16:23:33 INFO  [Epoch 57] Val Results: {'recall@1': 0.00814, 'recall@5': 0.027773, 'ndcg@5': 0.018021, 'recall@10': 0.045543, 'ndcg@10': 0.02372}
+Wed 28 May 2025 16:23:56 INFO  [Epoch 58] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/58.pt Code balance 0.6682 Used code num of level 1: 256
+Wed 28 May 2025 16:23:56 INFO  [Epoch 58] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/58.pt Code balance 0.7536 Used code num of level 2: 256
+Wed 28 May 2025 16:23:56 INFO  [Epoch 58] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/58.pt Code balance 0.8619 Used code num of level 3: 256
+Wed 28 May 2025 16:23:56 INFO  [Epoch 58] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/58.pt Code confilct {'Max': 36, 'Min': 1, 'Type': 25379, '%': 0.9819}
+Wed 28 May 2025 16:23:56 INFO  [Epoch 58] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 36
+Wed 28 May 2025 16:23:56 INFO  [Epoch 58] [time: 23.09s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3737), ('kl_loss', 0.0241), ('dec_cl_loss', 9.4125)]]
+Wed 28 May 2025 16:23:56 INFO  [Epoch 58] REC lr: [0.004985340692364313] ID lr: [9.676309309327565e-05]
+Wed 28 May 2025 16:25:02 INFO  [Epoch 59] [time: 65.17s, train loss[('loss', 2.593), ('kl_loss', 0.0237), ('code_loss', 2.5901), ('dec_cl_loss', 9.5109)]]
+Wed 28 May 2025 16:25:02 INFO  [Epoch 59] REC lr: [0.004983047419110144] ID lr: [9.676309309327565e-05]
+Wed 28 May 2025 16:26:14 INFO  [Epoch 59] Val Results: {'recall@1': 0.007944, 'recall@5': 0.027283, 'ndcg@5': 0.017582, 'recall@10': 0.042915, 'ndcg@10': 0.022605}
+Wed 28 May 2025 16:26:37 INFO  [Epoch 60] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/60.pt Code balance 0.6667 Used code num of level 1: 256
+Wed 28 May 2025 16:26:37 INFO  [Epoch 60] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/60.pt Code balance 0.7471 Used code num of level 2: 256
+Wed 28 May 2025 16:26:37 INFO  [Epoch 60] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/60.pt Code balance 0.8551 Used code num of level 3: 256
+Wed 28 May 2025 16:26:37 INFO  [Epoch 60] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/60.pt Code confilct {'Max': 29, 'Min': 1, 'Type': 25409, '%': 0.983}
+Wed 28 May 2025 16:26:37 INFO  [Epoch 60] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 29
+Wed 28 May 2025 16:26:37 INFO  [Epoch 60] [time: 22.89s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3643), ('kl_loss', 0.0239), ('dec_cl_loss', 9.3997)]]
+Wed 28 May 2025 16:26:37 INFO  [Epoch 60] REC lr: [0.004983047419110144] ID lr: [9.646746424172657e-05]
+Wed 28 May 2025 16:27:42 INFO  [Epoch 61] [time: 65.39s, train loss[('loss', 2.5873), ('kl_loss', 0.0243), ('code_loss', 2.5844), ('dec_cl_loss', 9.5099)]]
+Wed 28 May 2025 16:27:42 INFO  [Epoch 61] REC lr: [0.004980588168004875] ID lr: [9.646746424172657e-05]
+Wed 28 May 2025 16:28:55 INFO  [Epoch 61] Val Results: {'recall@1': 0.008689, 'recall@5': 0.027812, 'ndcg@5': 0.01821, 'recall@10': 0.044209, 'ndcg@10': 0.023478}
+Wed 28 May 2025 16:29:17 INFO  [Epoch 62] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/62.pt Code balance 0.6653 Used code num of level 1: 256
+Wed 28 May 2025 16:29:18 INFO  [Epoch 62] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/62.pt Code balance 0.7426 Used code num of level 2: 256
+Wed 28 May 2025 16:29:18 INFO  [Epoch 62] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/62.pt Code balance 0.8572 Used code num of level 3: 256
+Wed 28 May 2025 16:29:18 INFO  [Epoch 62] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/62.pt Code confilct {'Max': 33, 'Min': 1, 'Type': 25374, '%': 0.9817}
+Wed 28 May 2025 16:29:18 INFO  [Epoch 62] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 33
+Wed 28 May 2025 16:29:18 INFO  [Epoch 62] [time: 23.08s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3614), ('kl_loss', 0.0244), ('dec_cl_loss', 9.4026)]]
+Wed 28 May 2025 16:29:18 INFO  [Epoch 62] REC lr: [0.004980588168004875] ID lr: [9.615941123602563e-05]
+Wed 28 May 2025 16:30:23 INFO  [Epoch 63] [time: 65.62s, train loss[('loss', 2.5826), ('kl_loss', 0.024), ('code_loss', 2.5798), ('dec_cl_loss', 9.5184)]]
+Wed 28 May 2025 16:30:23 INFO  [Epoch 63] REC lr: [0.004977963103435706] ID lr: [9.615941123602563e-05]
+Wed 28 May 2025 16:31:37 INFO  [Epoch 63] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/63.pt
+Wed 28 May 2025 16:31:37 INFO  [Epoch 63] Val Results: {'recall@1': 0.008571, 'recall@5': 0.028087, 'ndcg@5': 0.018346, 'recall@10': 0.045151, 'ndcg@10': 0.023837}
+Wed 28 May 2025 16:31:59 INFO  [Epoch 64] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/64.pt Code balance 0.6629 Used code num of level 1: 256
+Wed 28 May 2025 16:31:59 INFO  [Epoch 64] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/64.pt Code balance 0.7358 Used code num of level 2: 256
+Wed 28 May 2025 16:31:59 INFO  [Epoch 64] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/64.pt Code balance 0.8577 Used code num of level 3: 256
+Wed 28 May 2025 16:31:59 INFO  [Epoch 64] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/64.pt Code confilct {'Max': 41, 'Min': 1, 'Type': 25391, '%': 0.9823}
+Wed 28 May 2025 16:31:59 INFO  [Epoch 64] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 41
+Wed 28 May 2025 16:31:59 INFO  [Epoch 64] [time: 22.91s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3545), ('kl_loss', 0.0231), ('dec_cl_loss', 9.4005)]]
+Wed 28 May 2025 16:31:59 INFO  [Epoch 64] REC lr: [0.004977963103435706] ID lr: [9.583901644128768e-05]
+Wed 28 May 2025 16:33:05 INFO  [Epoch 65] [time: 65.49s, train loss[('loss', 2.5762), ('kl_loss', 0.0238), ('code_loss', 2.5733), ('dec_cl_loss', 9.5036)]]
+Wed 28 May 2025 16:33:05 INFO  [Epoch 65] REC lr: [0.004975172400873542] ID lr: [9.583901644128768e-05]
+Wed 28 May 2025 16:34:17 INFO  [Epoch 65] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/65.pt
+Wed 28 May 2025 16:34:17 INFO  [Epoch 65] Val Results: {'recall@1': 0.008669, 'recall@5': 0.028832, 'ndcg@5': 0.018763, 'recall@10': 0.044954, 'ndcg@10': 0.023955}
+Wed 28 May 2025 16:34:40 INFO  [Epoch 66] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/66.pt Code balance 0.664 Used code num of level 1: 256
+Wed 28 May 2025 16:34:40 INFO  [Epoch 66] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/66.pt Code balance 0.7461 Used code num of level 2: 256
+Wed 28 May 2025 16:34:40 INFO  [Epoch 66] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/66.pt Code balance 0.8598 Used code num of level 3: 256
+Wed 28 May 2025 16:34:40 INFO  [Epoch 66] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/66.pt Code confilct {'Max': 32, 'Min': 1, 'Type': 25382, '%': 0.982}
+Wed 28 May 2025 16:34:40 INFO  [Epoch 66] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 32
+Wed 28 May 2025 16:34:40 INFO  [Epoch 66] [time: 23.04s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3487), ('kl_loss', 0.0231), ('dec_cl_loss', 9.3852)]]
+Wed 28 May 2025 16:34:40 INFO  [Epoch 66] REC lr: [0.004975172400873542] ID lr: [9.550636552249109e-05]
+Wed 28 May 2025 16:35:46 INFO  [Epoch 67] [time: 65.03s, train loss[('loss', 2.5687), ('kl_loss', 0.0239), ('code_loss', 2.5658), ('dec_cl_loss', 9.493)]]
+Wed 28 May 2025 16:35:46 INFO  [Epoch 67] REC lr: [0.004972216246861262] ID lr: [9.550636552249109e-05]
+Wed 28 May 2025 16:36:59 INFO  [Epoch 67] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/67.pt
+Wed 28 May 2025 16:36:59 INFO  [Epoch 67] Val Results: {'recall@1': 0.008708, 'recall@5': 0.029872, 'ndcg@5': 0.019264, 'recall@10': 0.045837, 'ndcg@10': 0.024381}
+Wed 28 May 2025 16:37:22 INFO  [Epoch 68] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/68.pt Code balance 0.6626 Used code num of level 1: 256
+Wed 28 May 2025 16:37:22 INFO  [Epoch 68] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/68.pt Code balance 0.7416 Used code num of level 2: 256
+Wed 28 May 2025 16:37:22 INFO  [Epoch 68] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/68.pt Code balance 0.8588 Used code num of level 3: 256
+Wed 28 May 2025 16:37:22 INFO  [Epoch 68] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/68.pt Code confilct {'Max': 31, 'Min': 1, 'Type': 25407, '%': 0.9829}
+Wed 28 May 2025 16:37:22 INFO  [Epoch 68] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 31
+Wed 28 May 2025 16:37:22 INFO  [Epoch 68] [time: 23.43s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3355), ('kl_loss', 0.0236), ('dec_cl_loss', 9.3719)]]
+Wed 28 May 2025 16:37:22 INFO  [Epoch 68] REC lr: [0.004972216246861262] ID lr: [9.516154742157323e-05]
+Wed 28 May 2025 16:38:28 INFO  [Epoch 69] [time: 65.63s, train loss[('loss', 2.5651), ('kl_loss', 0.024), ('code_loss', 2.5623), ('dec_cl_loss', 9.4848)]]
+Wed 28 May 2025 16:38:28 INFO  [Epoch 69] REC lr: [0.004969094839001249] ID lr: [9.516154742157323e-05]
+Wed 28 May 2025 16:39:41 INFO  [Epoch 69] Val Results: {'recall@1': 0.008532, 'recall@5': 0.028773, 'ndcg@5': 0.018584, 'recall@10': 0.044719, 'ndcg@10': 0.023698}
+Wed 28 May 2025 16:40:04 INFO  [Epoch 70] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/70.pt Code balance 0.6602 Used code num of level 1: 256
+Wed 28 May 2025 16:40:04 INFO  [Epoch 70] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/70.pt Code balance 0.7386 Used code num of level 2: 256
+Wed 28 May 2025 16:40:04 INFO  [Epoch 70] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/70.pt Code balance 0.8583 Used code num of level 3: 256
+Wed 28 May 2025 16:40:04 INFO  [Epoch 70] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/70.pt Code confilct {'Max': 47, 'Min': 1, 'Type': 25382, '%': 0.982}
+Wed 28 May 2025 16:40:04 INFO  [Epoch 70] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 47
+Wed 28 May 2025 16:40:04 INFO  [Epoch 70] [time: 22.94s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3355), ('kl_loss', 0.0235), ('dec_cl_loss', 9.3672)]]
+Wed 28 May 2025 16:40:04 INFO  [Epoch 70] REC lr: [0.004969094839001249] ID lr: [9.480465433364976e-05]
+Wed 28 May 2025 16:41:09 INFO  [Epoch 71] [time: 65.16s, train loss[('loss', 2.5613), ('kl_loss', 0.0239), ('code_loss', 2.5584), ('dec_cl_loss', 9.4832)]]
+Wed 28 May 2025 16:41:09 INFO  [Epoch 71] REC lr: [0.004965808385942186] ID lr: [9.480465433364976e-05]
+Wed 28 May 2025 16:42:23 INFO  [Epoch 71] Val Results: {'recall@1': 0.00865, 'recall@5': 0.02946, 'ndcg@5': 0.018883, 'recall@10': 0.045915, 'ndcg@10': 0.024175}
+Wed 28 May 2025 16:42:45 INFO  [Epoch 72] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/72.pt Code balance 0.6611 Used code num of level 1: 256
+Wed 28 May 2025 16:42:45 INFO  [Epoch 72] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/72.pt Code balance 0.7401 Used code num of level 2: 256
+Wed 28 May 2025 16:42:46 INFO  [Epoch 72] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/72.pt Code balance 0.8606 Used code num of level 3: 256
+Wed 28 May 2025 16:42:46 INFO  [Epoch 72] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/72.pt Code confilct {'Max': 58, 'Min': 1, 'Type': 25382, '%': 0.982}
+Wed 28 May 2025 16:42:46 INFO  [Epoch 72] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 58
+Wed 28 May 2025 16:42:46 INFO  [Epoch 72] [time: 23.06s, train loss[('loss', 0.0075), ('vq_loss', 0.0046), ('code_loss', 2.3301), ('kl_loss', 0.0242), ('dec_cl_loss', 9.3626)]]
+Wed 28 May 2025 16:42:46 INFO  [Epoch 72] REC lr: [0.004965808385942186] ID lr: [9.443578168236411e-05]
+Wed 28 May 2025 16:43:51 INFO  [Epoch 73] [time: 65.49s, train loss[('loss', 2.5497), ('kl_loss', 0.024), ('code_loss', 2.5469), ('dec_cl_loss', 9.4739)]]
+Wed 28 May 2025 16:43:51 INFO  [Epoch 73] REC lr: [0.004962357107365103] ID lr: [9.443578168236411e-05]
+Wed 28 May 2025 16:45:04 INFO  [Epoch 73] Val Results: {'recall@1': 0.008787, 'recall@5': 0.028871, 'ndcg@5': 0.018838, 'recall@10': 0.045955, 'ndcg@10': 0.024325}
+Wed 28 May 2025 16:45:27 INFO  [Epoch 74] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/74.pt Code balance 0.6575 Used code num of level 1: 256
+Wed 28 May 2025 16:45:27 INFO  [Epoch 74] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/74.pt Code balance 0.7361 Used code num of level 2: 256
+Wed 28 May 2025 16:45:27 INFO  [Epoch 74] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/74.pt Code balance 0.8617 Used code num of level 3: 256
+Wed 28 May 2025 16:45:27 INFO  [Epoch 74] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/74.pt Code confilct {'Max': 77, 'Min': 1, 'Type': 25416, '%': 0.9833}
+Wed 28 May 2025 16:45:27 INFO  [Epoch 74] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 77
+Wed 28 May 2025 16:45:27 INFO  [Epoch 74] [time: 23.06s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.3196), ('kl_loss', 0.0238), ('dec_cl_loss', 9.3555)]]
+Wed 28 May 2025 16:45:27 INFO  [Epoch 74] REC lr: [0.004962357107365103] ID lr: [9.405502809437385e-05]
+Wed 28 May 2025 16:46:32 INFO  [Epoch 75] [time: 64.98s, train loss[('loss', 2.545), ('kl_loss', 0.0241), ('code_loss', 2.5421), ('dec_cl_loss', 9.469)]]
+Wed 28 May 2025 16:46:32 INFO  [Epoch 75] REC lr: [0.004958741233968695] ID lr: [9.405502809437385e-05]
+Wed 28 May 2025 16:47:44 INFO  [Epoch 75] Val Results: {'recall@1': 0.008179, 'recall@5': 0.028146, 'ndcg@5': 0.018163, 'recall@10': 0.045072, 'ndcg@10': 0.023612}
+Wed 28 May 2025 16:48:07 INFO  [Epoch 76] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/76.pt Code balance 0.6573 Used code num of level 1: 256
+Wed 28 May 2025 16:48:07 INFO  [Epoch 76] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/76.pt Code balance 0.738 Used code num of level 2: 256
+Wed 28 May 2025 16:48:07 INFO  [Epoch 76] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/76.pt Code balance 0.8594 Used code num of level 3: 256
+Wed 28 May 2025 16:48:07 INFO  [Epoch 76] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/76.pt Code confilct {'Max': 79, 'Min': 1, 'Type': 25402, '%': 0.9827}
+Wed 28 May 2025 16:48:07 INFO  [Epoch 76] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 79
+Wed 28 May 2025 16:48:07 INFO  [Epoch 76] [time: 22.61s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.3156), ('kl_loss', 0.0239), ('dec_cl_loss', 9.3499)]]
+Wed 28 May 2025 16:48:07 INFO  [Epoch 76] REC lr: [0.004958741233968695] ID lr: [9.366249537298041e-05]
+Wed 28 May 2025 16:49:12 INFO  [Epoch 77] [time: 64.95s, train loss[('loss', 2.5391), ('kl_loss', 0.024), ('code_loss', 2.5363), ('dec_cl_loss', 9.4627)]]
+Wed 28 May 2025 16:49:12 INFO  [Epoch 77] REC lr: [0.004954961007453905] ID lr: [9.366249537298041e-05]
+Wed 28 May 2025 16:50:24 INFO  [Epoch 77] Val Results: {'recall@1': 0.008355, 'recall@5': 0.027871, 'ndcg@5': 0.018135, 'recall@10': 0.045347, 'ndcg@10': 0.02374}
+Wed 28 May 2025 16:50:47 INFO  [Epoch 78] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/78.pt Code balance 0.6572 Used code num of level 1: 256
+Wed 28 May 2025 16:50:47 INFO  [Epoch 78] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/78.pt Code balance 0.7364 Used code num of level 2: 256
+Wed 28 May 2025 16:50:47 INFO  [Epoch 78] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/78.pt Code balance 0.8591 Used code num of level 3: 256
+Wed 28 May 2025 16:50:47 INFO  [Epoch 78] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/78.pt Code confilct {'Max': 80, 'Min': 1, 'Type': 25396, '%': 0.9825}
+Wed 28 May 2025 16:50:47 INFO  [Epoch 78] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 80
+Wed 28 May 2025 16:50:47 INFO  [Epoch 78] [time: 22.85s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.3109), ('kl_loss', 0.0236), ('dec_cl_loss', 9.3498)]]
+Wed 28 May 2025 16:50:47 INFO  [Epoch 78] REC lr: [0.004954961007453905] ID lr: [9.32582884709098e-05]
+Wed 28 May 2025 16:51:52 INFO  [Epoch 79] [time: 65.76s, train loss[('loss', 2.5311), ('kl_loss', 0.0241), ('code_loss', 2.5282), ('dec_cl_loss', 9.459)]]
+Wed 28 May 2025 16:51:52 INFO  [Epoch 79] REC lr: [0.004951016680507757] ID lr: [9.32582884709098e-05]
+Wed 28 May 2025 16:53:04 INFO  [Epoch 79] Val Results: {'recall@1': 0.008042, 'recall@5': 0.029244, 'ndcg@5': 0.018617, 'recall@10': 0.045857, 'ndcg@10': 0.02395}
+Wed 28 May 2025 16:53:27 INFO  [Epoch 80] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/80.pt Code balance 0.6575 Used code num of level 1: 256
+Wed 28 May 2025 16:53:27 INFO  [Epoch 80] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/80.pt Code balance 0.7444 Used code num of level 2: 256
+Wed 28 May 2025 16:53:27 INFO  [Epoch 80] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/80.pt Code balance 0.8614 Used code num of level 3: 256
+Wed 28 May 2025 16:53:27 INFO  [Epoch 80] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/80.pt Code confilct {'Max': 86, 'Min': 1, 'Type': 25379, '%': 0.9819}
+Wed 28 May 2025 16:53:27 INFO  [Epoch 80] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 86
+Wed 28 May 2025 16:53:27 INFO  [Epoch 80] [time: 22.70s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.3069), ('kl_loss', 0.0238), ('dec_cl_loss', 9.3408)]]
+Wed 28 May 2025 16:53:27 INFO  [Epoch 80] REC lr: [0.004951016680507757] ID lr: [9.284251546225086e-05]
+Wed 28 May 2025 16:54:33 INFO  [Epoch 81] [time: 65.48s, train loss[('loss', 2.5337), ('kl_loss', 0.0243), ('code_loss', 2.5308), ('dec_cl_loss', 9.4636)]]
+Wed 28 May 2025 16:54:33 INFO  [Epoch 81] REC lr: [0.0049469085167864815] ID lr: [9.284251546225086e-05]
+Wed 28 May 2025 16:55:46 INFO  [Epoch 81] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/81.pt
+Wed 28 May 2025 16:55:46 INFO  [Epoch 81] Val Results: {'recall@1': 0.008865, 'recall@5': 0.030107, 'ndcg@5': 0.019538, 'recall@10': 0.046484, 'ndcg@10': 0.024827}
+Wed 28 May 2025 16:56:09 INFO  [Epoch 82] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/82.pt Code balance 0.6533 Used code num of level 1: 256
+Wed 28 May 2025 16:56:09 INFO  [Epoch 82] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/82.pt Code balance 0.7344 Used code num of level 2: 256
+Wed 28 May 2025 16:56:09 INFO  [Epoch 82] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/82.pt Code balance 0.8579 Used code num of level 3: 256
+Wed 28 May 2025 16:56:09 INFO  [Epoch 82] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/82.pt Code confilct {'Max': 82, 'Min': 1, 'Type': 25385, '%': 0.9821}
+Wed 28 May 2025 16:56:09 INFO  [Epoch 82] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 82
+Wed 28 May 2025 16:56:09 INFO  [Epoch 82] [time: 22.96s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.3014), ('kl_loss', 0.0237), ('dec_cl_loss', 9.3404)]]
+Wed 28 May 2025 16:56:09 INFO  [Epoch 82] REC lr: [0.0049469085167864815] ID lr: [9.24152875135593e-05]
+Wed 28 May 2025 16:57:14 INFO  [Epoch 83] [time: 65.15s, train loss[('loss', 2.5265), ('kl_loss', 0.0242), ('code_loss', 2.5237), ('dec_cl_loss', 9.4494)]]
+Wed 28 May 2025 16:57:14 INFO  [Epoch 83] REC lr: [0.004942636790897874] ID lr: [9.24152875135593e-05]
+Wed 28 May 2025 16:58:27 INFO  [Epoch 83] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/83.pt
+Wed 28 May 2025 16:58:27 INFO  [Epoch 83] Val Results: {'recall@1': 0.009277, 'recall@5': 0.029381, 'ndcg@5': 0.019281, 'recall@10': 0.046602, 'ndcg@10': 0.024858}
+Wed 28 May 2025 16:58:49 INFO  [Epoch 84] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/84.pt Code balance 0.6533 Used code num of level 1: 256
+Wed 28 May 2025 16:58:49 INFO  [Epoch 84] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/84.pt Code balance 0.7374 Used code num of level 2: 256
+Wed 28 May 2025 16:58:49 INFO  [Epoch 84] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/84.pt Code balance 0.8545 Used code num of level 3: 256
+Wed 28 May 2025 16:58:49 INFO  [Epoch 84] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/84.pt Code confilct {'Max': 87, 'Min': 1, 'Type': 25387, '%': 0.9822}
+Wed 28 May 2025 16:58:49 INFO  [Epoch 84] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 87
+Wed 28 May 2025 16:58:49 INFO  [Epoch 84] [time: 22.46s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2977), ('kl_loss', 0.0237), ('dec_cl_loss', 9.3356)]]
+Wed 28 May 2025 16:58:49 INFO  [Epoch 84] REC lr: [0.004942636790897874] ID lr: [9.197671885413465e-05]
+Wed 28 May 2025 16:59:55 INFO  [Epoch 85] [time: 65.47s, train loss[('loss', 2.5254), ('kl_loss', 0.0241), ('code_loss', 2.5225), ('dec_cl_loss', 9.455)]]
+Wed 28 May 2025 16:59:55 INFO  [Epoch 85] REC lr: [0.004938201788382952] ID lr: [9.197671885413465e-05]
+Wed 28 May 2025 17:01:07 INFO  [Epoch 85] Val Results: {'recall@1': 0.008591, 'recall@5': 0.028518, 'ndcg@5': 0.018544, 'recall@10': 0.045307, 'ndcg@10': 0.023961}
+Wed 28 May 2025 17:01:29 INFO  [Epoch 86] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/86.pt Code balance 0.6554 Used code num of level 1: 256
+Wed 28 May 2025 17:01:29 INFO  [Epoch 86] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/86.pt Code balance 0.7443 Used code num of level 2: 256
+Wed 28 May 2025 17:01:29 INFO  [Epoch 86] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/86.pt Code balance 0.8581 Used code num of level 3: 256
+Wed 28 May 2025 17:01:29 INFO  [Epoch 86] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/86.pt Code confilct {'Max': 86, 'Min': 1, 'Type': 25391, '%': 0.9823}
+Wed 28 May 2025 17:01:29 INFO  [Epoch 86] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 86
+Wed 28 May 2025 17:01:29 INFO  [Epoch 86] [time: 22.76s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2956), ('kl_loss', 0.0237), ('dec_cl_loss', 9.3438)]]
+Wed 28 May 2025 17:01:29 INFO  [Epoch 86] REC lr: [0.004938201788382952] ID lr: [9.152692674547854e-05]
+Wed 28 May 2025 17:02:35 INFO  [Epoch 87] [time: 65.52s, train loss[('loss', 2.5202), ('kl_loss', 0.0243), ('code_loss', 2.5173), ('dec_cl_loss', 9.4482)]]
+Wed 28 May 2025 17:02:35 INFO  [Epoch 87] REC lr: [0.004933603805696863] ID lr: [9.152692674547854e-05]
+Wed 28 May 2025 17:03:47 INFO  [Epoch 87] Val Results: {'recall@1': 0.008414, 'recall@5': 0.029224, 'ndcg@5': 0.018953, 'recall@10': 0.045288, 'ndcg@10': 0.024111}
+Wed 28 May 2025 17:04:10 INFO  [Epoch 88] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/88.pt Code balance 0.6503 Used code num of level 1: 256
+Wed 28 May 2025 17:04:10 INFO  [Epoch 88] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/88.pt Code balance 0.7358 Used code num of level 2: 256
+Wed 28 May 2025 17:04:10 INFO  [Epoch 88] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/88.pt Code balance 0.8533 Used code num of level 3: 256
+Wed 28 May 2025 17:04:10 INFO  [Epoch 88] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/88.pt Code confilct {'Max': 89, 'Min': 1, 'Type': 25359, '%': 0.9811}
+Wed 28 May 2025 17:04:10 INFO  [Epoch 88] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 89
+Wed 28 May 2025 17:04:10 INFO  [Epoch 88] [time: 22.84s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2889), ('kl_loss', 0.0238), ('dec_cl_loss', 9.3255)]]
+Wed 28 May 2025 17:04:10 INFO  [Epoch 88] REC lr: [0.004933603805696863] ID lr: [9.10660314499419e-05]
+Wed 28 May 2025 17:05:15 INFO  [Epoch 89] [time: 65.20s, train loss[('loss', 2.5148), ('kl_loss', 0.0241), ('code_loss', 2.512), ('dec_cl_loss', 9.4452)]]
+Wed 28 May 2025 17:05:15 INFO  [Epoch 89] REC lr: [0.004928843150189067] ID lr: [9.10660314499419e-05]
+Wed 28 May 2025 17:06:27 INFO  [Epoch 89] Val Results: {'recall@1': 0.008944, 'recall@5': 0.028754, 'ndcg@5': 0.018851, 'recall@10': 0.045229, 'ndcg@10': 0.024167}
+Wed 28 May 2025 17:06:50 INFO  [Epoch 90] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/90.pt Code balance 0.6538 Used code num of level 1: 256
+Wed 28 May 2025 17:06:50 INFO  [Epoch 90] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/90.pt Code balance 0.7391 Used code num of level 2: 256
+Wed 28 May 2025 17:06:50 INFO  [Epoch 90] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/90.pt Code balance 0.8532 Used code num of level 3: 256
+Wed 28 May 2025 17:06:50 INFO  [Epoch 90] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/90.pt Code confilct {'Max': 89, 'Min': 1, 'Type': 25391, '%': 0.9823}
+Wed 28 May 2025 17:06:50 INFO  [Epoch 90] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 89
+Wed 28 May 2025 17:06:50 INFO  [Epoch 90] [time: 22.45s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2832), ('kl_loss', 0.0238), ('dec_cl_loss', 9.3188)]]
+Wed 28 May 2025 17:06:50 INFO  [Epoch 90] REC lr: [0.004928843150189067] ID lr: [9.059415619857024e-05]
+Wed 28 May 2025 17:07:55 INFO  [Epoch 91] [time: 65.52s, train loss[('loss', 2.5068), ('kl_loss', 0.0243), ('code_loss', 2.504), ('dec_cl_loss', 9.4392)]]
+Wed 28 May 2025 17:07:55 INFO  [Epoch 91] REC lr: [0.004923920140082795] ID lr: [9.059415619857024e-05]
+Wed 28 May 2025 17:09:08 INFO  [Epoch 91] Val Results: {'recall@1': 0.008807, 'recall@5': 0.029617, 'ndcg@5': 0.019131, 'recall@10': 0.045876, 'ndcg@10': 0.02436}
+Wed 28 May 2025 17:09:30 INFO  [Epoch 92] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/92.pt Code balance 0.6487 Used code num of level 1: 256
+Wed 28 May 2025 17:09:30 INFO  [Epoch 92] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/92.pt Code balance 0.7331 Used code num of level 2: 256
+Wed 28 May 2025 17:09:30 INFO  [Epoch 92] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/92.pt Code balance 0.8543 Used code num of level 3: 256
+Wed 28 May 2025 17:09:30 INFO  [Epoch 92] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/92.pt Code confilct {'Max': 89, 'Min': 1, 'Type': 25384, '%': 0.982}
+Wed 28 May 2025 17:09:30 INFO  [Epoch 92] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 89
+Wed 28 May 2025 17:09:30 INFO  [Epoch 92] [time: 22.76s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2768), ('kl_loss', 0.0237), ('dec_cl_loss', 9.323)]]
+Wed 28 May 2025 17:09:30 INFO  [Epoch 92] REC lr: [0.004923920140082795] ID lr: [9.011142715815485e-05]
+Wed 28 May 2025 17:10:36 INFO  [Epoch 93] [time: 65.19s, train loss[('loss', 2.5026), ('kl_loss', 0.0243), ('code_loss', 2.4998), ('dec_cl_loss', 9.4319)]]
+Wed 28 May 2025 17:10:36 INFO  [Epoch 93] REC lr: [0.0049188351044537745] ID lr: [9.011142715815485e-05]
+Wed 28 May 2025 17:11:48 INFO  [Epoch 93] Val Results: {'recall@1': 0.007924, 'recall@5': 0.029087, 'ndcg@5': 0.018499, 'recall@10': 0.04568, 'ndcg@10': 0.023845}
+Wed 28 May 2025 17:12:11 INFO  [Epoch 94] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/94.pt Code balance 0.6504 Used code num of level 1: 256
+Wed 28 May 2025 17:12:11 INFO  [Epoch 94] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/94.pt Code balance 0.7356 Used code num of level 2: 256
+Wed 28 May 2025 17:12:11 INFO  [Epoch 94] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/94.pt Code balance 0.8553 Used code num of level 3: 256
+Wed 28 May 2025 17:12:11 INFO  [Epoch 94] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/94.pt Code confilct {'Max': 89, 'Min': 1, 'Type': 25401, '%': 0.9827}
+Wed 28 May 2025 17:12:11 INFO  [Epoch 94] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 89
+Wed 28 May 2025 17:12:11 INFO  [Epoch 94] [time: 23.02s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2703), ('kl_loss', 0.0237), ('dec_cl_loss', 9.3083)]]
+Wed 28 May 2025 17:12:11 INFO  [Epoch 94] REC lr: [0.0049188351044537745] ID lr: [8.961797339749926e-05]
+Wed 28 May 2025 17:13:17 INFO  [Epoch 95] [time: 65.45s, train loss[('loss', 2.497), ('kl_loss', 0.0243), ('code_loss', 2.4942), ('dec_cl_loss', 9.4292)]]
+Wed 28 May 2025 17:13:17 INFO  [Epoch 95] REC lr: [0.004913588383208236] ID lr: [8.961797339749926e-05]
+Wed 28 May 2025 17:14:29 INFO  [Epoch 95] Val Results: {'recall@1': 0.007963, 'recall@5': 0.028891, 'ndcg@5': 0.018525, 'recall@10': 0.045582, 'ndcg@10': 0.023922}
+Wed 28 May 2025 17:14:51 INFO  [Epoch 96] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/96.pt Code balance 0.6471 Used code num of level 1: 256
+Wed 28 May 2025 17:14:51 INFO  [Epoch 96] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/96.pt Code balance 0.7296 Used code num of level 2: 256
+Wed 28 May 2025 17:14:51 INFO  [Epoch 96] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/96.pt Code balance 0.8517 Used code num of level 3: 256
+Wed 28 May 2025 17:14:51 INFO  [Epoch 96] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/96.pt Code confilct {'Max': 80, 'Min': 1, 'Type': 25370, '%': 0.9815}
+Wed 28 May 2025 17:14:52 INFO  [Epoch 96] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 80
+Wed 28 May 2025 17:14:52 INFO  [Epoch 96] [time: 22.97s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2701), ('kl_loss', 0.0237), ('dec_cl_loss', 9.3091)]]
+Wed 28 May 2025 17:14:52 INFO  [Epoch 96] REC lr: [0.004913588383208236] ID lr: [8.911392685290962e-05]
+Wed 28 May 2025 17:15:57 INFO  [Epoch 97] [time: 65.27s, train loss[('loss', 2.4959), ('kl_loss', 0.0243), ('code_loss', 2.4931), ('dec_cl_loss', 9.4314)]]
+Wed 28 May 2025 17:15:57 INFO  [Epoch 97] REC lr: [0.004908180327060189] ID lr: [8.911392685290962e-05]
+Wed 28 May 2025 17:17:09 INFO  [Epoch 97] Val Results: {'recall@1': 0.00812, 'recall@5': 0.029852, 'ndcg@5': 0.018882, 'recall@10': 0.046602, 'ndcg@10': 0.024264}
+Wed 28 May 2025 17:17:32 INFO  [Epoch 98] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/98.pt Code balance 0.646 Used code num of level 1: 256
+Wed 28 May 2025 17:17:32 INFO  [Epoch 98] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/98.pt Code balance 0.7334 Used code num of level 2: 256
+Wed 28 May 2025 17:17:32 INFO  [Epoch 98] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/98.pt Code balance 0.8538 Used code num of level 3: 256
+Wed 28 May 2025 17:17:32 INFO  [Epoch 98] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/98.pt Code confilct {'Max': 41, 'Min': 1, 'Type': 25402, '%': 0.9827}
+Wed 28 May 2025 17:17:32 INFO  [Epoch 98] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 41
+Wed 28 May 2025 17:17:32 INFO  [Epoch 98] [time: 23.19s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2644), ('kl_loss', 0.0238), ('dec_cl_loss', 9.3108)]]
+Wed 28 May 2025 17:17:32 INFO  [Epoch 98] REC lr: [0.004908180327060189] ID lr: [8.859942229291855e-05]
+Wed 28 May 2025 17:18:37 INFO  [Epoch 99] [time: 65.16s, train loss[('loss', 2.4948), ('kl_loss', 0.024), ('code_loss', 2.4919), ('dec_cl_loss', 9.428)]]
+Wed 28 May 2025 17:18:37 INFO  [Epoch 99] REC lr: [0.004902611297507981] ID lr: [8.859942229291855e-05]
+Wed 28 May 2025 17:19:50 INFO  [Epoch 99] Val Results: {'recall@1': 0.00863, 'recall@5': 0.030185, 'ndcg@5': 0.019393, 'recall@10': 0.046249, 'ndcg@10': 0.024567}
+Wed 28 May 2025 17:20:13 INFO  [Epoch 100] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/100.pt Code balance 0.6453 Used code num of level 1: 256
+Wed 28 May 2025 17:20:13 INFO  [Epoch 100] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/100.pt Code balance 0.7322 Used code num of level 2: 256
+Wed 28 May 2025 17:20:13 INFO  [Epoch 100] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/100.pt Code balance 0.8545 Used code num of level 3: 256
+Wed 28 May 2025 17:20:13 INFO  [Epoch 100] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/100.pt Code confilct {'Max': 57, 'Min': 1, 'Type': 25390, '%': 0.9823}
+Wed 28 May 2025 17:20:13 INFO  [Epoch 100] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 57
+Wed 28 May 2025 17:20:13 INFO  [Epoch 100] [time: 23.17s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2616), ('kl_loss', 0.0238), ('dec_cl_loss', 9.3054)]]
+Wed 28 May 2025 17:20:13 INFO  [Epoch 100] REC lr: [0.004902611297507981] ID lr: [8.80745972822516e-05]
+Wed 28 May 2025 17:21:18 INFO  [Epoch 101] [time: 64.81s, train loss[('loss', 2.4891), ('kl_loss', 0.0243), ('code_loss', 2.4863), ('dec_cl_loss', 9.4229)]]
+Wed 28 May 2025 17:21:18 INFO  [Epoch 101] REC lr: [0.004896881666810133] ID lr: [8.80745972822516e-05]
+Wed 28 May 2025 17:22:30 INFO  [Epoch 101] Val Results: {'recall@1': 0.008453, 'recall@5': 0.028224, 'ndcg@5': 0.018332, 'recall@10': 0.045935, 'ndcg@10': 0.024033}
+Wed 28 May 2025 17:22:52 INFO  [Epoch 102] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/102.pt Code balance 0.6421 Used code num of level 1: 255
+Wed 28 May 2025 17:22:52 INFO  [Epoch 102] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/102.pt Code balance 0.7274 Used code num of level 2: 256
+Wed 28 May 2025 17:22:52 INFO  [Epoch 102] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/102.pt Code balance 0.8547 Used code num of level 3: 256
+Wed 28 May 2025 17:22:52 INFO  [Epoch 102] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/102.pt Code confilct {'Max': 47, 'Min': 1, 'Type': 25365, '%': 0.9813}
+Wed 28 May 2025 17:22:52 INFO  [Epoch 102] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 47
+Wed 28 May 2025 17:22:52 INFO  [Epoch 102] [time: 22.87s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2596), ('kl_loss', 0.0237), ('dec_cl_loss', 9.3043)]]
+Wed 28 May 2025 17:22:52 INFO  [Epoch 102] REC lr: [0.004896881666810133] ID lr: [8.753959214504611e-05]
+Wed 28 May 2025 17:23:58 INFO  [Epoch 103] [time: 65.23s, train loss[('loss', 2.4859), ('kl_loss', 0.0241), ('code_loss', 2.483), ('dec_cl_loss', 9.4176)]]
+Wed 28 May 2025 17:23:58 INFO  [Epoch 103] REC lr: [0.004890991817960454] ID lr: [8.753959214504611e-05]
+Wed 28 May 2025 17:25:10 INFO  [Epoch 103] Val Results: {'recall@1': 0.009336, 'recall@5': 0.030127, 'ndcg@5': 0.019726, 'recall@10': 0.045974, 'ndcg@10': 0.024827}
+Wed 28 May 2025 17:25:33 INFO  [Epoch 104] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/104.pt Code balance 0.644 Used code num of level 1: 255
+Wed 28 May 2025 17:25:33 INFO  [Epoch 104] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/104.pt Code balance 0.7328 Used code num of level 2: 256
+Wed 28 May 2025 17:25:33 INFO  [Epoch 104] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/104.pt Code balance 0.8603 Used code num of level 3: 256
+Wed 28 May 2025 17:25:33 INFO  [Epoch 104] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/104.pt Code confilct {'Max': 51, 'Min': 1, 'Type': 25401, '%': 0.9827}
+Wed 28 May 2025 17:25:33 INFO  [Epoch 104] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 51
+Wed 28 May 2025 17:25:33 INFO  [Epoch 104] [time: 22.70s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2546), ('kl_loss', 0.0237), ('dec_cl_loss', 9.2915)]]
+Wed 28 May 2025 17:25:33 INFO  [Epoch 104] REC lr: [0.004890991817960454] ID lr: [8.699454992733238e-05]
+Wed 28 May 2025 17:26:38 INFO  [Epoch 105] [time: 65.13s, train loss[('loss', 2.4851), ('kl_loss', 0.0239), ('code_loss', 2.4823), ('dec_cl_loss', 9.4163)]]
+Wed 28 May 2025 17:26:38 INFO  [Epoch 105] REC lr: [0.004884942144662442] ID lr: [8.699454992733238e-05]
+Wed 28 May 2025 17:27:50 INFO  [Epoch 105] Val Results: {'recall@1': 0.009042, 'recall@5': 0.028538, 'ndcg@5': 0.018742, 'recall@10': 0.045778, 'ndcg@10': 0.024295}
+Wed 28 May 2025 17:28:13 INFO  [Epoch 106] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/106.pt Code balance 0.6432 Used code num of level 1: 255
+Wed 28 May 2025 17:28:13 INFO  [Epoch 106] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/106.pt Code balance 0.7336 Used code num of level 2: 256
+Wed 28 May 2025 17:28:13 INFO  [Epoch 106] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/106.pt Code balance 0.8574 Used code num of level 3: 256
+Wed 28 May 2025 17:28:13 INFO  [Epoch 106] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/106.pt Code confilct {'Max': 34, 'Min': 1, 'Type': 25395, '%': 0.9825}
+Wed 28 May 2025 17:28:13 INFO  [Epoch 106] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 34
+Wed 28 May 2025 17:28:13 INFO  [Epoch 106] [time: 22.98s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2514), ('kl_loss', 0.0232), ('dec_cl_loss', 9.2942)]]
+Wed 28 May 2025 17:28:13 INFO  [Epoch 106] REC lr: [0.004884942144662442] ID lr: [8.64396163587869e-05]
+Wed 28 May 2025 17:29:19 INFO  [Epoch 107] [time: 65.69s, train loss[('loss', 2.477), ('kl_loss', 0.0226), ('code_loss', 2.4742), ('dec_cl_loss', 9.4132)]]
+Wed 28 May 2025 17:29:19 INFO  [Epoch 107] REC lr: [0.004878733051302967] ID lr: [8.64396163587869e-05]
+Wed 28 May 2025 17:30:31 INFO  [Epoch 107] Val Results: {'recall@1': 0.008042, 'recall@5': 0.029734, 'ndcg@5': 0.01892, 'recall@10': 0.04519, 'ndcg@10': 0.023885}
+Wed 28 May 2025 17:30:53 INFO  [Epoch 108] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/108.pt Code balance 0.642 Used code num of level 1: 255
+Wed 28 May 2025 17:30:53 INFO  [Epoch 108] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/108.pt Code balance 0.7336 Used code num of level 2: 256
+Wed 28 May 2025 17:30:53 INFO  [Epoch 108] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/108.pt Code balance 0.8555 Used code num of level 3: 256
+Wed 28 May 2025 17:30:53 INFO  [Epoch 108] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/108.pt Code confilct {'Max': 37, 'Min': 1, 'Type': 25420, '%': 0.9834}
+Wed 28 May 2025 17:30:54 INFO  [Epoch 108] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 37
+Wed 28 May 2025 17:30:54 INFO  [Epoch 108] [time: 22.66s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.252), ('kl_loss', 0.0156), ('dec_cl_loss', 9.2917)]]
+Wed 28 May 2025 17:30:54 INFO  [Epoch 108] REC lr: [0.004878733051302967] ID lr: [8.587493981376822e-05]
+Wed 28 May 2025 17:31:59 INFO  [Epoch 109] [time: 65.59s, train loss[('loss', 2.4735), ('kl_loss', 0.0074), ('code_loss', 2.4706), ('dec_cl_loss', 9.4119)]]
+Wed 28 May 2025 17:31:59 INFO  [Epoch 109] REC lr: [0.004872364952925241] ID lr: [8.587493981376822e-05]
+Wed 28 May 2025 17:33:12 INFO  [Epoch 109] Val Results: {'recall@1': 0.008375, 'recall@5': 0.028773, 'ndcg@5': 0.018588, 'recall@10': 0.044641, 'ndcg@10': 0.02369}
+Wed 28 May 2025 17:33:35 INFO  [Epoch 110] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/110.pt Code balance 0.6431 Used code num of level 1: 255
+Wed 28 May 2025 17:33:35 INFO  [Epoch 110] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/110.pt Code balance 0.7366 Used code num of level 2: 256
+Wed 28 May 2025 17:33:35 INFO  [Epoch 110] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/110.pt Code balance 0.8613 Used code num of level 3: 256
+Wed 28 May 2025 17:33:35 INFO  [Epoch 110] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/110.pt Code confilct {'Max': 27, 'Min': 1, 'Type': 25398, '%': 0.9826}
+Wed 28 May 2025 17:33:35 INFO  [Epoch 110] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 27
+Wed 28 May 2025 17:33:35 INFO  [Epoch 110] [time: 23.43s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2425), ('kl_loss', 0.0048), ('dec_cl_loss', 9.2837)]]
+Wed 28 May 2025 17:33:35 INFO  [Epoch 110] REC lr: [0.004872364952925241] ID lr: [8.530067127164556e-05]
+Wed 28 May 2025 17:34:40 INFO  [Epoch 111] [time: 65.00s, train loss[('loss', 2.4753), ('kl_loss', 0.0035), ('code_loss', 2.4725), ('dec_cl_loss', 9.4136)]]
+Wed 28 May 2025 17:34:40 INFO  [Epoch 111] REC lr: [0.00486583827520107] ID lr: [8.530067127164556e-05]
+Wed 28 May 2025 17:35:52 INFO  [Epoch 111] Val Results: {'recall@1': 0.0081, 'recall@5': 0.029264, 'ndcg@5': 0.018795, 'recall@10': 0.046425, 'ndcg@10': 0.024318}
+Wed 28 May 2025 17:36:14 INFO  [Epoch 112] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/112.pt Code balance 0.6416 Used code num of level 1: 255
+Wed 28 May 2025 17:36:14 INFO  [Epoch 112] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/112.pt Code balance 0.7302 Used code num of level 2: 256
+Wed 28 May 2025 17:36:15 INFO  [Epoch 112] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/112.pt Code balance 0.8572 Used code num of level 3: 256
+Wed 28 May 2025 17:36:15 INFO  [Epoch 112] Evaluation ./myckpt/scientific/May-28-2025_15-05-20270c/112.pt Code confilct {'Max': 25, 'Min': 1, 'Type': 25391, '%': 0.9823}
+Wed 28 May 2025 17:36:15 INFO  [Epoch 112] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 25
+Wed 28 May 2025 17:36:15 INFO  [Epoch 112] [time: 22.90s, train loss[('loss', 0.0075), ('vq_loss', 0.0047), ('code_loss', 2.2432), ('kl_loss', 0.0029), ('dec_cl_loss', 9.2973)]]
+Wed 28 May 2025 17:36:15 INFO  [Epoch 112] REC lr: [0.00486583827520107] ID lr: [8.471696427643105e-05]
+Wed 28 May 2025 17:37:20 INFO  [Epoch 113] [time: 65.31s, train loss[('loss', 2.4668), ('kl_loss', 0.0026), ('code_loss', 2.464), ('dec_cl_loss', 9.42)]]
+Wed 28 May 2025 17:37:20 INFO  [Epoch 113] REC lr: [0.004859153454402408] ID lr: [8.471696427643105e-05]
+Wed 28 May 2025 17:38:33 INFO  [Epoch 113] Val Results: {'recall@1': 0.007963, 'recall@5': 0.029146, 'ndcg@5': 0.018555, 'recall@10': 0.045876, 'ndcg@10': 0.023925}
+Wed 28 May 2025 17:38:33 INFO  Loading model parameters from ./myckpt/scientific/May-28-2025_15-05-20270c/83.pt
+Wed 28 May 2025 17:39:47 INFO  [Epoch 0] [TOKENIZER] RQ-VAE semantic IDs, maximum conflict: 82
+Wed 28 May 2025 17:40:52 INFO  [Epoch 0] [time: 65.24s, train loss[('loss', 2.3902), ('kl_loss', 0.0239), ('code_loss', 2.3902), ('dec_cl_loss', 9.3852)]]
+Wed 28 May 2025 17:40:52 INFO  [Epoch 0] Current REC lr: [0.0004998766400914329]
+Wed 28 May 2025 17:42:05 INFO  [Epoch 0] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/0.pt
+Wed 28 May 2025 17:42:05 INFO  [Epoch 0] Val Results: {'recall@1': 0.00912, 'recall@5': 0.032872, 'ndcg@5': 0.02099, 'recall@10': 0.05076, 'ndcg@10': 0.026746}
+Wed 28 May 2025 17:43:10 INFO  [Epoch 1] [time: 65.08s, train loss[('loss', 2.3497), ('kl_loss', 0.0239), ('code_loss', 2.3497), ('dec_cl_loss', 9.3695)]]
+Wed 28 May 2025 17:43:10 INFO  [Epoch 1] Current REC lr: [0.0004995066821070679]
+Wed 28 May 2025 17:44:22 INFO  [Epoch 1] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/1.pt
+Wed 28 May 2025 17:44:22 INFO  [Epoch 1] Val Results: {'recall@1': 0.009826, 'recall@5': 0.033324, 'ndcg@5': 0.02152, 'recall@10': 0.050348, 'ndcg@10': 0.027028}
+Wed 28 May 2025 17:45:27 INFO  [Epoch 2] [time: 65.13s, train loss[('loss', 2.333), ('kl_loss', 0.0238), ('code_loss', 2.333), ('dec_cl_loss', 9.3665)]]
+Wed 28 May 2025 17:45:27 INFO  [Epoch 2] Current REC lr: [0.00049889049115077]
+Wed 28 May 2025 17:46:39 INFO  [Epoch 2] Val Results: {'recall@1': 0.009768, 'recall@5': 0.032774, 'ndcg@5': 0.02128, 'recall@10': 0.050289, 'ndcg@10': 0.026937}
+Wed 28 May 2025 17:47:44 INFO  [Epoch 3] [time: 65.11s, train loss[('loss', 2.3196), ('kl_loss', 0.0239), ('code_loss', 2.3196), ('dec_cl_loss', 9.3595)]]
+Wed 28 May 2025 17:47:44 INFO  [Epoch 3] Current REC lr: [0.0004980286753286195]
+Wed 28 May 2025 17:48:57 INFO  [Epoch 3] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/3.pt
+Wed 28 May 2025 17:48:57 INFO  [Epoch 3] Val Results: {'recall@1': 0.009944, 'recall@5': 0.033225, 'ndcg@5': 0.021648, 'recall@10': 0.050505, 'ndcg@10': 0.027227}
+Wed 28 May 2025 17:50:02 INFO  [Epoch 4] [time: 65.42s, train loss[('loss', 2.3097), ('kl_loss', 0.0239), ('code_loss', 2.3097), ('dec_cl_loss', 9.358)]]
+Wed 28 May 2025 17:50:02 INFO  [Epoch 4] Current REC lr: [0.0004969220851487844]
+Wed 28 May 2025 17:51:15 INFO  [Epoch 4] Val Results: {'recall@1': 0.009689, 'recall@5': 0.033657, 'ndcg@5': 0.02163, 'recall@10': 0.050819, 'ndcg@10': 0.027168}
+Wed 28 May 2025 17:52:20 INFO  [Epoch 5] [time: 65.54s, train loss[('loss', 2.3015), ('kl_loss', 0.0238), ('code_loss', 2.3015), ('dec_cl_loss', 9.3507)]]
+Wed 28 May 2025 17:52:20 INFO  [Epoch 5] Current REC lr: [0.0004955718126821722]
+Wed 28 May 2025 17:53:32 INFO  [Epoch 5] Val Results: {'recall@1': 0.009826, 'recall@5': 0.032696, 'ndcg@5': 0.02124, 'recall@10': 0.050642, 'ndcg@10': 0.027025}
+Wed 28 May 2025 17:54:37 INFO  [Epoch 6] [time: 65.20s, train loss[('loss', 2.2935), ('kl_loss', 0.0239), ('code_loss', 2.2935), ('dec_cl_loss', 9.3509)]]
+Wed 28 May 2025 17:54:37 INFO  [Epoch 6] Current REC lr: [0.0004939791904846869]
+Wed 28 May 2025 17:55:50 INFO  [Epoch 6] Val Results: {'recall@1': 0.009709, 'recall@5': 0.033304, 'ndcg@5': 0.021537, 'recall@10': 0.050799, 'ndcg@10': 0.027172}
+Wed 28 May 2025 17:56:55 INFO  [Epoch 7] [time: 65.38s, train loss[('loss', 2.2861), ('kl_loss', 0.0239), ('code_loss', 2.2861), ('dec_cl_loss', 9.352)]]
+Wed 28 May 2025 17:56:55 INFO  [Epoch 7] Current REC lr: [0.0004921457902821578]
+Wed 28 May 2025 17:58:07 INFO  [Epoch 7] Val Results: {'recall@1': 0.009532, 'recall@5': 0.033441, 'ndcg@5': 0.021433, 'recall@10': 0.050584, 'ndcg@10': 0.026942}
+Wed 28 May 2025 17:59:13 INFO  [Epoch 8] [time: 65.55s, train loss[('loss', 2.2812), ('kl_loss', 0.0239), ('code_loss', 2.2812), ('dec_cl_loss', 9.3509)]]
+Wed 28 May 2025 17:59:13 INFO  [Epoch 8] Current REC lr: [0.0004900734214192358]
+Wed 28 May 2025 18:00:25 INFO  [Epoch 8] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/8.pt
+Wed 28 May 2025 18:00:25 INFO  [Epoch 8] Val Results: {'recall@1': 0.00965, 'recall@5': 0.033618, 'ndcg@5': 0.021658, 'recall@10': 0.051388, 'ndcg@10': 0.027376}
+Wed 28 May 2025 18:01:30 INFO  [Epoch 9] [time: 65.17s, train loss[('loss', 2.2747), ('kl_loss', 0.0239), ('code_loss', 2.2747), ('dec_cl_loss', 9.3449)]]
+Wed 28 May 2025 18:01:30 INFO  [Epoch 9] Current REC lr: [0.0004877641290737884]
+Wed 28 May 2025 18:02:43 INFO  [Epoch 9] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/9.pt
+Wed 28 May 2025 18:02:43 INFO  [Epoch 9] Val Results: {'recall@1': 0.009885, 'recall@5': 0.033598, 'ndcg@5': 0.02172, 'recall@10': 0.051486, 'ndcg@10': 0.027485}
+Wed 28 May 2025 18:03:49 INFO  [Epoch 10] [time: 65.42s, train loss[('loss', 2.2694), ('kl_loss', 0.024), ('code_loss', 2.2694), ('dec_cl_loss', 9.3455)]]
+Wed 28 May 2025 18:03:49 INFO  [Epoch 10] Current REC lr: [0.0004852201922385564]
+Wed 28 May 2025 18:05:01 INFO  [Epoch 10] Val Results: {'recall@1': 0.009336, 'recall@5': 0.033441, 'ndcg@5': 0.021446, 'recall@10': 0.051545, 'ndcg@10': 0.02728}
+Wed 28 May 2025 18:06:07 INFO  [Epoch 11] [time: 65.82s, train loss[('loss', 2.2647), ('kl_loss', 0.024), ('code_loss', 2.2647), ('dec_cl_loss', 9.3435)]]
+Wed 28 May 2025 18:06:07 INFO  [Epoch 11] Current REC lr: [0.00048244412147206283]
+Wed 28 May 2025 18:07:19 INFO  [Epoch 11] Val Results: {'recall@1': 0.009709, 'recall@5': 0.033873, 'ndcg@5': 0.021744, 'recall@10': 0.050721, 'ndcg@10': 0.027129}
+Wed 28 May 2025 18:08:24 INFO  [Epoch 12] [time: 65.35s, train loss[('loss', 2.2597), ('kl_loss', 0.024), ('code_loss', 2.2597), ('dec_cl_loss', 9.3411)]]
+Wed 28 May 2025 18:08:24 INFO  [Epoch 12] Current REC lr: [0.00047943865642099525]
+Wed 28 May 2025 18:09:36 INFO  [Epoch 12] Val Results: {'recall@1': 0.009748, 'recall@5': 0.033127, 'ndcg@5': 0.021509, 'recall@10': 0.05129, 'ndcg@10': 0.027354}
+Wed 28 May 2025 18:10:41 INFO  [Epoch 13] [time: 65.31s, train loss[('loss', 2.2548), ('kl_loss', 0.024), ('code_loss', 2.2548), ('dec_cl_loss', 9.3385)]]
+Wed 28 May 2025 18:10:41 INFO  [Epoch 13] Current REC lr: [0.0004762067631165049]
+Wed 28 May 2025 18:11:53 INFO  [Epoch 13] Val Results: {'recall@1': 0.009552, 'recall@5': 0.03352, 'ndcg@5': 0.021589, 'recall@10': 0.050917, 'ndcg@10': 0.027174}
+Wed 28 May 2025 18:12:58 INFO  [Epoch 14] [time: 65.28s, train loss[('loss', 2.2518), ('kl_loss', 0.024), ('code_loss', 2.2518), ('dec_cl_loss', 9.3363)]]
+Wed 28 May 2025 18:12:58 INFO  [Epoch 14] Current REC lr: [0.00047275163104709196]
+Wed 28 May 2025 18:14:11 INFO  [Epoch 14] Val Results: {'recall@1': 0.009709, 'recall@5': 0.033441, 'ndcg@5': 0.02157, 'recall@10': 0.05125, 'ndcg@10': 0.027292}
+Wed 28 May 2025 18:15:16 INFO  [Epoch 15] [time: 64.96s, train loss[('loss', 2.2477), ('kl_loss', 0.024), ('code_loss', 2.2477), ('dec_cl_loss', 9.3357)]]
+Wed 28 May 2025 18:15:16 INFO  [Epoch 15] Current REC lr: [0.0004690766700109659]
+Wed 28 May 2025 18:16:27 INFO  [Epoch 15] Val Results: {'recall@1': 0.009728, 'recall@5': 0.033775, 'ndcg@5': 0.021739, 'recall@10': 0.05125, 'ndcg@10': 0.027373}
+Wed 28 May 2025 18:17:33 INFO  [Epoch 16] [time: 65.42s, train loss[('loss', 2.2428), ('kl_loss', 0.024), ('code_loss', 2.2428), ('dec_cl_loss', 9.335)]]
+Wed 28 May 2025 18:17:33 INFO  [Epoch 16] Current REC lr: [0.0004651855067509859]
+Wed 28 May 2025 18:18:45 INFO  [Epoch 16] Val Results: {'recall@1': 0.00963, 'recall@5': 0.033186, 'ndcg@5': 0.021434, 'recall@10': 0.05129, 'ndcg@10': 0.027242}
+Wed 28 May 2025 18:19:51 INFO  [Epoch 17] [time: 65.24s, train loss[('loss', 2.2414), ('kl_loss', 0.0241), ('code_loss', 2.2414), ('dec_cl_loss', 9.3356)]]
+Wed 28 May 2025 18:19:51 INFO  [Epoch 17] Current REC lr: [0.00046108198137550377]
+Wed 28 May 2025 18:21:03 INFO  [Epoch 17] Val Results: {'recall@1': 0.009768, 'recall@5': 0.033284, 'ndcg@5': 0.021589, 'recall@10': 0.051525, 'ndcg@10': 0.027471}
+Wed 28 May 2025 18:22:08 INFO  [Epoch 18] [time: 65.64s, train loss[('loss', 2.2369), ('kl_loss', 0.0241), ('code_loss', 2.2369), ('dec_cl_loss', 9.3339)]]
+Wed 28 May 2025 18:22:08 INFO  [Epoch 18] Current REC lr: [0.00045677014356864043]
+Wed 28 May 2025 18:23:21 INFO  [Epoch 18] Val Results: {'recall@1': 0.00967, 'recall@5': 0.033716, 'ndcg@5': 0.021771, 'recall@10': 0.050937, 'ndcg@10': 0.027294}
+Wed 28 May 2025 18:24:26 INFO  [Epoch 19] [time: 65.36s, train loss[('loss', 2.2336), ('kl_loss', 0.0241), ('code_loss', 2.2336), ('dec_cl_loss', 9.3355)]]
+Wed 28 May 2025 18:24:26 INFO  [Epoch 19] Current REC lr: [0.0004522542485937369]
+Wed 28 May 2025 18:25:39 INFO  [Epoch 19] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/19.pt
+Wed 28 May 2025 18:25:39 INFO  [Epoch 19] Val Results: {'recall@1': 0.009611, 'recall@5': 0.033814, 'ndcg@5': 0.021738, 'recall@10': 0.051819, 'ndcg@10': 0.027511}
+Wed 28 May 2025 18:26:45 INFO  [Epoch 20] [time: 65.31s, train loss[('loss', 2.2299), ('kl_loss', 0.0242), ('code_loss', 2.2299), ('dec_cl_loss', 9.3271)]]
+Wed 28 May 2025 18:26:45 INFO  [Epoch 20] Current REC lr: [0.0004475387530939226]
+Wed 28 May 2025 18:27:58 INFO  [Epoch 20] Val Results: {'recall@1': 0.009571, 'recall@5': 0.033441, 'ndcg@5': 0.021538, 'recall@10': 0.051231, 'ndcg@10': 0.027252}
+Wed 28 May 2025 18:29:03 INFO  [Epoch 21] [time: 65.64s, train loss[('loss', 2.2267), ('kl_loss', 0.0242), ('code_loss', 2.2267), ('dec_cl_loss', 9.3295)]]
+Wed 28 May 2025 18:29:03 INFO  [Epoch 21] Current REC lr: [0.0004426283106939473]
+Wed 28 May 2025 18:30:16 INFO  [Epoch 21] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/21.pt
+Wed 28 May 2025 18:30:16 INFO  [Epoch 21] Val Results: {'recall@1': 0.009826, 'recall@5': 0.034088, 'ndcg@5': 0.022005, 'recall@10': 0.051348, 'ndcg@10': 0.027559}
+Wed 28 May 2025 18:31:21 INFO  [Epoch 22] [time: 65.35s, train loss[('loss', 2.2243), ('kl_loss', 0.0241), ('code_loss', 2.2243), ('dec_cl_loss', 9.3257)]]
+Wed 28 May 2025 18:31:21 INFO  [Epoch 22] Current REC lr: [0.0004375277674076149]
+Wed 28 May 2025 18:32:33 INFO  [Epoch 22] Val Results: {'recall@1': 0.009787, 'recall@5': 0.033775, 'ndcg@5': 0.021817, 'recall@10': 0.05129, 'ndcg@10': 0.027439}
+Wed 28 May 2025 18:33:38 INFO  [Epoch 23] [time: 65.08s, train loss[('loss', 2.2214), ('kl_loss', 0.0242), ('code_loss', 2.2214), ('dec_cl_loss', 9.322)]]
+Wed 28 May 2025 18:33:38 INFO  [Epoch 23] Current REC lr: [0.00043224215685535287]
+Wed 28 May 2025 18:34:50 INFO  [Epoch 23] Val Results: {'recall@1': 0.00963, 'recall@5': 0.033912, 'ndcg@5': 0.021826, 'recall@10': 0.051447, 'ndcg@10': 0.027453}
+Wed 28 May 2025 18:35:56 INFO  [Epoch 24] [time: 65.36s, train loss[('loss', 2.218), ('kl_loss', 0.0243), ('code_loss', 2.218), ('dec_cl_loss', 9.3237)]]
+Wed 28 May 2025 18:35:56 INFO  [Epoch 24] Current REC lr: [0.00042677669529663686]
+Wed 28 May 2025 18:37:08 INFO  [Epoch 24] Val Results: {'recall@1': 0.009611, 'recall@5': 0.033716, 'ndcg@5': 0.02174, 'recall@10': 0.051662, 'ndcg@10': 0.027509}
+Wed 28 May 2025 18:38:14 INFO  [Epoch 25] [time: 65.80s, train loss[('loss', 2.2159), ('kl_loss', 0.0243), ('code_loss', 2.2159), ('dec_cl_loss', 9.3217)]]
+Wed 28 May 2025 18:38:14 INFO  [Epoch 25] Current REC lr: [0.0004211367764821722]
+Wed 28 May 2025 18:39:27 INFO  [Epoch 25] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/25.pt
+Wed 28 May 2025 18:39:27 INFO  [Epoch 25] Val Results: {'recall@1': 0.009826, 'recall@5': 0.033735, 'ndcg@5': 0.021882, 'recall@10': 0.051329, 'ndcg@10': 0.027572}
+Wed 28 May 2025 18:40:32 INFO  [Epoch 26] [time: 65.27s, train loss[('loss', 2.2129), ('kl_loss', 0.0244), ('code_loss', 2.2129), ('dec_cl_loss', 9.3208)]]
+Wed 28 May 2025 18:40:32 INFO  [Epoch 26] Current REC lr: [0.00041532796633091297]
+Wed 28 May 2025 18:41:44 INFO  [Epoch 26] Val Results: {'recall@1': 0.009238, 'recall@5': 0.033794, 'ndcg@5': 0.02165, 'recall@10': 0.051054, 'ndcg@10': 0.027226}
+Wed 28 May 2025 18:42:50 INFO  [Epoch 27] [time: 65.46s, train loss[('loss', 2.2107), ('kl_loss', 0.0243), ('code_loss', 2.2107), ('dec_cl_loss', 9.3191)]]
+Wed 28 May 2025 18:42:50 INFO  [Epoch 27] Current REC lr: [0.00040935599743717243]
+Wed 28 May 2025 18:44:02 INFO  [Epoch 27] Val Results: {'recall@1': 0.009611, 'recall@5': 0.033677, 'ndcg@5': 0.021664, 'recall@10': 0.051584, 'ndcg@10': 0.027403}
+Wed 28 May 2025 18:45:07 INFO  [Epoch 28] [time: 65.17s, train loss[('loss', 2.2086), ('kl_loss', 0.0243), ('code_loss', 2.2086), ('dec_cl_loss', 9.3172)]]
+Wed 28 May 2025 18:45:07 INFO  [Epoch 28] Current REC lr: [0.00040322676341324415]
+Wed 28 May 2025 18:46:20 INFO  [Epoch 28] Val Results: {'recall@1': 0.00965, 'recall@5': 0.033735, 'ndcg@5': 0.021739, 'recall@10': 0.051348, 'ndcg@10': 0.027403}
+Wed 28 May 2025 18:47:25 INFO  [Epoch 29] [time: 64.99s, train loss[('loss', 2.2055), ('kl_loss', 0.0244), ('code_loss', 2.2055), ('dec_cl_loss', 9.3218)]]
+Wed 28 May 2025 18:47:25 INFO  [Epoch 29] Current REC lr: [0.0003969463130731183]
+Wed 28 May 2025 18:48:37 INFO  [Epoch 29] Val Results: {'recall@1': 0.009454, 'recall@5': 0.033598, 'ndcg@5': 0.021672, 'recall@10': 0.050917, 'ndcg@10': 0.027243}
+Wed 28 May 2025 18:49:42 INFO  [Epoch 30] [time: 65.32s, train loss[('loss', 2.2031), ('kl_loss', 0.0244), ('code_loss', 2.2031), ('dec_cl_loss', 9.3185)]]
+Wed 28 May 2025 18:49:42 INFO  [Epoch 30] Current REC lr: [0.00039052084446303264]
+Wed 28 May 2025 18:50:55 INFO  [Epoch 30] Val Results: {'recall@1': 0.009336, 'recall@5': 0.033833, 'ndcg@5': 0.021688, 'recall@10': 0.051545, 'ndcg@10': 0.027381}
+Wed 28 May 2025 18:52:00 INFO  [Epoch 31] [time: 65.11s, train loss[('loss', 2.2007), ('kl_loss', 0.0244), ('code_loss', 2.2007), ('dec_cl_loss', 9.3162)]]
+Wed 28 May 2025 18:52:00 INFO  [Epoch 31] Current REC lr: [0.00038395669874474915]
+Wed 28 May 2025 18:53:13 INFO  [Epoch 31] Val Results: {'recall@1': 0.009709, 'recall@5': 0.033696, 'ndcg@5': 0.021887, 'recall@10': 0.051133, 'ndcg@10': 0.02751}
+Wed 28 May 2025 18:54:19 INFO  [Epoch 32] [time: 65.88s, train loss[('loss', 2.1981), ('kl_loss', 0.0245), ('code_loss', 2.1981), ('dec_cl_loss', 9.3141)]]
+Wed 28 May 2025 18:54:19 INFO  [Epoch 32] Current REC lr: [0.00037726035393759286]
+Wed 28 May 2025 18:55:31 INFO  [Epoch 32] Val Results: {'recall@1': 0.009552, 'recall@5': 0.034265, 'ndcg@5': 0.02198, 'recall@10': 0.051447, 'ndcg@10': 0.027508}
+Wed 28 May 2025 18:56:37 INFO  [Epoch 33] [time: 65.28s, train loss[('loss', 2.1975), ('kl_loss', 0.0245), ('code_loss', 2.1975), ('dec_cl_loss', 9.3101)]]
+Wed 28 May 2025 18:56:37 INFO  [Epoch 33] Current REC lr: [0.0003704384185254288]
+Wed 28 May 2025 18:57:49 INFO  [Epoch 33] Val Results: {'recall@1': 0.009591, 'recall@5': 0.033108, 'ndcg@5': 0.021553, 'recall@10': 0.051701, 'ndcg@10': 0.027529}
+Wed 28 May 2025 18:58:54 INFO  [Epoch 34] [time: 65.34s, train loss[('loss', 2.1941), ('kl_loss', 0.0245), ('code_loss', 2.1941), ('dec_cl_loss', 9.3117)]]
+Wed 28 May 2025 18:58:54 INFO  [Epoch 34] Current REC lr: [0.00036349762493488667]
+Wed 28 May 2025 19:00:07 INFO  [Epoch 34] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/34.pt
+Wed 28 May 2025 19:00:07 INFO  [Epoch 34] Val Results: {'recall@1': 0.009826, 'recall@5': 0.034167, 'ndcg@5': 0.022004, 'recall@10': 0.051623, 'ndcg@10': 0.027614}
+Wed 28 May 2025 19:01:13 INFO  [Epoch 35] [time: 65.93s, train loss[('loss', 2.1917), ('kl_loss', 0.0245), ('code_loss', 2.1917), ('dec_cl_loss', 9.3084)]]
+Wed 28 May 2025 19:01:13 INFO  [Epoch 35] Current REC lr: [0.0003564448228912682]
+Wed 28 May 2025 19:02:25 INFO  [Epoch 35] Val Results: {'recall@1': 0.009473, 'recall@5': 0.03348, 'ndcg@5': 0.021506, 'recall@10': 0.051505, 'ndcg@10': 0.027312}
+Wed 28 May 2025 19:03:30 INFO  [Epoch 36] [time: 65.01s, train loss[('loss', 2.1908), ('kl_loss', 0.0246), ('code_loss', 2.1908), ('dec_cl_loss', 9.3077)]]
+Wed 28 May 2025 19:03:30 INFO  [Epoch 36] Current REC lr: [0.00034928697265869515]
+Wed 28 May 2025 19:04:42 INFO  [Epoch 36] Val Results: {'recall@1': 0.009709, 'recall@5': 0.033441, 'ndcg@5': 0.021638, 'recall@10': 0.051486, 'ndcg@10': 0.027427}
+Wed 28 May 2025 19:05:47 INFO  [Epoch 37] [time: 65.53s, train loss[('loss', 2.1868), ('kl_loss', 0.0246), ('code_loss', 2.1868), ('dec_cl_loss', 9.3063)]]
+Wed 28 May 2025 19:05:47 INFO  [Epoch 37] Current REC lr: [0.00034203113817116957]
+Wed 28 May 2025 19:07:00 INFO  [Epoch 37] Val Results: {'recall@1': 0.009316, 'recall@5': 0.033265, 'ndcg@5': 0.02136, 'recall@10': 0.051427, 'ndcg@10': 0.027181}
+Wed 28 May 2025 19:08:05 INFO  [Epoch 38] [time: 65.50s, train loss[('loss', 2.1859), ('kl_loss', 0.0246), ('code_loss', 2.1859), ('dec_cl_loss', 9.3053)]]
+Wed 28 May 2025 19:08:05 INFO  [Epoch 38] Current REC lr: [0.0003346844800613229]
+Wed 28 May 2025 19:09:18 INFO  [Epoch 38] Val Results: {'recall@1': 0.009748, 'recall@5': 0.033716, 'ndcg@5': 0.021795, 'recall@10': 0.05125, 'ndcg@10': 0.027426}
+Wed 28 May 2025 19:10:23 INFO  [Epoch 39] [time: 65.57s, train loss[('loss', 2.1836), ('kl_loss', 0.0247), ('code_loss', 2.1836), ('dec_cl_loss', 9.3047)]]
+Wed 28 May 2025 19:10:23 INFO  [Epoch 39] Current REC lr: [0.00032725424859373687]
+Wed 28 May 2025 19:11:35 INFO  [Epoch 39] Val Results: {'recall@1': 0.009611, 'recall@5': 0.033696, 'ndcg@5': 0.021692, 'recall@10': 0.051329, 'ndcg@10': 0.027369}
+Wed 28 May 2025 19:12:40 INFO  [Epoch 40] [time: 65.29s, train loss[('loss', 2.182), ('kl_loss', 0.0248), ('code_loss', 2.182), ('dec_cl_loss', 9.3022)]]
+Wed 28 May 2025 19:12:40 INFO  [Epoch 40] Current REC lr: [0.00031974777650980735]
+Wed 28 May 2025 19:13:53 INFO  [Epoch 40] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/40.pt
+Wed 28 May 2025 19:13:53 INFO  [Epoch 40] Val Results: {'recall@1': 0.009944, 'recall@5': 0.03399, 'ndcg@5': 0.022019, 'recall@10': 0.051525, 'ndcg@10': 0.027654}
+Wed 28 May 2025 19:14:58 INFO  [Epoch 41] [time: 65.12s, train loss[('loss', 2.18), ('kl_loss', 0.0248), ('code_loss', 2.18), ('dec_cl_loss', 9.3034)]]
+Wed 28 May 2025 19:14:58 INFO  [Epoch 41] Current REC lr: [0.0003121724717912138]
+Wed 28 May 2025 19:16:10 INFO  [Epoch 41] Val Results: {'recall@1': 0.009787, 'recall@5': 0.034245, 'ndcg@5': 0.022022, 'recall@10': 0.05129, 'ndcg@10': 0.027497}
+Wed 28 May 2025 19:17:16 INFO  [Epoch 42] [time: 65.57s, train loss[('loss', 2.1782), ('kl_loss', 0.0248), ('code_loss', 2.1782), ('dec_cl_loss', 9.3018)]]
+Wed 28 May 2025 19:17:16 INFO  [Epoch 42] Current REC lr: [0.0003045358103491357]
+Wed 28 May 2025 19:18:28 INFO  [Epoch 42] Save model ./myckpt/scientific/May-28-2025_15-05-20270c/42.pt
+Wed 28 May 2025 19:18:28 INFO  [Epoch 42] Val Results: {'recall@1': 0.009944, 'recall@5': 0.033461, 'ndcg@5': 0.021798, 'recall@10': 0.052074, 'ndcg@10': 0.027795}
+Wed 28 May 2025 19:19:34 INFO  [Epoch 43] [time: 65.65s, train loss[('loss', 2.1761), ('kl_loss', 0.0248), ('code_loss', 2.1761), ('dec_cl_loss', 9.3001)]]
+Wed 28 May 2025 19:19:34 INFO  [Epoch 43] Current REC lr: [0.0002968453286464312]
+Wed 28 May 2025 19:20:46 INFO  [Epoch 43] Val Results: {'recall@1': 0.009532, 'recall@5': 0.0335, 'ndcg@5': 0.021592, 'recall@10': 0.051623, 'ndcg@10': 0.027396}
+Wed 28 May 2025 19:21:51 INFO  [Epoch 44] [time: 65.41s, train loss[('loss', 2.1741), ('kl_loss', 0.0249), ('code_loss', 2.1741), ('dec_cl_loss', 9.2967)]]
+Wed 28 May 2025 19:21:51 INFO  [Epoch 44] Current REC lr: [0.00028910861626005774]
+Wed 28 May 2025 19:23:03 INFO  [Epoch 44] Val Results: {'recall@1': 0.009924, 'recall@5': 0.033755, 'ndcg@5': 0.021886, 'recall@10': 0.051545, 'ndcg@10': 0.027597}
+Wed 28 May 2025 19:24:09 INFO  [Epoch 45] [time: 65.78s, train loss[('loss', 2.1739), ('kl_loss', 0.025), ('code_loss', 2.1739), ('dec_cl_loss', 9.2956)]]
+Wed 28 May 2025 19:24:09 INFO  [Epoch 45] Current REC lr: [0.00028133330839107606]
+Wed 28 May 2025 19:25:22 INFO  [Epoch 45] Val Results: {'recall@1': 0.009571, 'recall@5': 0.033814, 'ndcg@5': 0.02182, 'recall@10': 0.051093, 'ndcg@10': 0.027373}
+Wed 28 May 2025 19:26:27 INFO  [Epoch 46] [time: 65.27s, train loss[('loss', 2.1709), ('kl_loss', 0.025), ('code_loss', 2.1709), ('dec_cl_loss', 9.2961)]]
+Wed 28 May 2025 19:26:27 INFO  [Epoch 46] Current REC lr: [0.0002735270783296286]
+Wed 28 May 2025 19:27:39 INFO  [Epoch 46] Val Results: {'recall@1': 0.009846, 'recall@5': 0.033794, 'ndcg@5': 0.021876, 'recall@10': 0.051545, 'ndcg@10': 0.027573}
+Wed 28 May 2025 19:28:44 INFO  [Epoch 47] [time: 65.14s, train loss[('loss', 2.1685), ('kl_loss', 0.025), ('code_loss', 2.1685), ('dec_cl_loss', 9.2963)]]
+Wed 28 May 2025 19:28:44 INFO  [Epoch 47] Current REC lr: [0.0002656976298823284]
+Wed 28 May 2025 19:29:56 INFO  [Epoch 47] Val Results: {'recall@1': 0.009924, 'recall@5': 0.033932, 'ndcg@5': 0.021858, 'recall@10': 0.051662, 'ndcg@10': 0.027567}
+Wed 28 May 2025 19:31:01 INFO  [Epoch 48] [time: 65.07s, train loss[('loss', 2.1674), ('kl_loss', 0.0251), ('code_loss', 2.1674), ('dec_cl_loss', 9.294)]]
+Wed 28 May 2025 19:31:01 INFO  [Epoch 48] Current REC lr: [0.00025785268976953206]
+Wed 28 May 2025 19:32:14 INFO  [Epoch 48] Val Results: {'recall@1': 0.009591, 'recall@5': 0.034147, 'ndcg@5': 0.021907, 'recall@10': 0.051231, 'ndcg@10': 0.027399}
+Wed 28 May 2025 19:33:19 INFO  [Epoch 49] [time: 65.17s, train loss[('loss', 2.1671), ('kl_loss', 0.0251), ('code_loss', 2.1671), ('dec_cl_loss', 9.2936)]]
+Wed 28 May 2025 19:33:19 INFO  [Epoch 49] Current REC lr: [0.00025]
+Wed 28 May 2025 19:34:31 INFO  [Epoch 49] Val Results: {'recall@1': 0.00965, 'recall@5': 0.033559, 'ndcg@5': 0.021678, 'recall@10': 0.051682, 'ndcg@10': 0.027517}
+Wed 28 May 2025 19:35:36 INFO  [Epoch 50] [time: 65.02s, train loss[('loss', 2.1648), ('kl_loss', 0.0252), ('code_loss', 2.1648), ('dec_cl_loss', 9.291)]]
+Wed 28 May 2025 19:35:36 INFO  [Epoch 50] Current REC lr: [0.00024214731023046793]
+Wed 28 May 2025 19:36:48 INFO  [Epoch 50] Val Results: {'recall@1': 0.009826, 'recall@5': 0.033892, 'ndcg@5': 0.021892, 'recall@10': 0.051172, 'ndcg@10': 0.027437}
+Wed 28 May 2025 19:37:54 INFO  [Epoch 51] [time: 65.42s, train loss[('loss', 2.1636), ('kl_loss', 0.0251), ('code_loss', 2.1636), ('dec_cl_loss', 9.2899)]]
+Wed 28 May 2025 19:37:54 INFO  [Epoch 51] Current REC lr: [0.00023430237011767165]
+Wed 28 May 2025 19:39:06 INFO  [Epoch 51] Val Results: {'recall@1': 0.009866, 'recall@5': 0.033833, 'ndcg@5': 0.021939, 'recall@10': 0.051133, 'ndcg@10': 0.027507}
+Wed 28 May 2025 19:40:11 INFO  [Epoch 52] [time: 64.94s, train loss[('loss', 2.1615), ('kl_loss', 0.0252), ('code_loss', 2.1615), ('dec_cl_loss', 9.2893)]]
+Wed 28 May 2025 19:40:11 INFO  [Epoch 52] Current REC lr: [0.00022647292167037142]
+Wed 28 May 2025 19:41:23 INFO  [Epoch 52] Val Results: {'recall@1': 0.009473, 'recall@5': 0.0335, 'ndcg@5': 0.02162, 'recall@10': 0.051231, 'ndcg@10': 0.027327}
+Wed 28 May 2025 19:41:23 INFO  Loading model parameters from ./myckpt/scientific/May-28-2025_15-05-20270c/42.pt
+Wed 28 May 2025 19:42:37 INFO  Pre Best Validation Score: 0.024858
+Wed 28 May 2025 19:42:37 INFO  Pre Test Results: {'recall@1': 0.007257, 'recall@5': 0.023948, 'ndcg@5': 0.015537, 'recall@10': 0.039149, 'ndcg@10': 0.020424}
+Wed 28 May 2025 19:42:37 INFO  Best Validation Score: 0.027795
+Wed 28 May 2025 19:42:37 INFO  Test Results: {'recall@1': 0.008669, 'recall@5': 0.027165, 'ndcg@5': 0.017943, 'recall@10': 0.043503, 'ndcg@10': 0.023199}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="products-container">
+        {% for product in products %}
+        <div class="product-card">
+            <img src="{{ product.image }}" alt="{{ product.name }}">
+            <h3>{{ product.name }}</h3>
+            <form action="{{ url_for('purchase') }}" method="post">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="product_name" value="{{ product.name }}">
+                <input type="hidden" name="product_image" value="{{ product.image }}">
+                <button type="submit" class="purchase-btn">Purchase</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

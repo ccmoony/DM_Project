@@ -5,3 +5,5 @@ myckpt
 utils/tmp
 .vscode
 third_party
+.DS_Store
+*/**/.DS_Store
