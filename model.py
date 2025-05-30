@@ -299,6 +299,9 @@ class Model(nn.Module, GenerationMixin):
             torch.Tensor: The generated sequences.
         """
         # Store interests temporarily for use in forward pass
+        if interests is None:
+            interests = [""] * input_ids.shape[0]
+
         self._current_interests = interests
         
         if prefix_allowed_tokens_fn is not None:

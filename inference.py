@@ -3,12 +3,11 @@ import json
 from typing import List
 from accelerate import PartialState
 from model import Model
-from utils import load_json
+from utils.utils import load_json, safe_load
 import os
 from transformers import T5Config, T5ForConditionalGeneration
 import numpy as np
 from vq import RQVAE
-from utils import safe_load
 import yaml
 
 class Recommender:
@@ -76,7 +75,7 @@ class Recommender:
         self.model_rec.eval()
         self.model_id.eval()
 
-    def predict_next_item(self, item_sequence: List[str], top_k: int = 8) -> List[int]:
+    def predict_next_item(self, item_sequence: List[str], interests = None, top_k: int = 8) -> List[int]:
         """
         Predict next items given a sequence of item IDs
         
@@ -98,14 +97,14 @@ class Recommender:
             output_codes = self.model_rec.generate(
                 input_ids=input_codes,
                 attention_mask=attention_mask,
+                interests=interests,
                 n_return_sequences=top_k,
             )[0]  # [top_k, seq_len+1]
         
         # Convert predicted codes back to item IDs
-        output_codes = output_codes.unsqueeze(1)  # [10, 1, 4]
-        expanded_large = self.item_codes.unsqueeze(0)  # [1, 100000, 4]
+        output_codes = output_codes.unsqueeze(1)  
+        expanded_large = self.item_codes.unsqueeze(0)  
 
-        # 计算所有行对的匹配情况 [10, 100000]
         matches = torch.all(output_codes == expanded_large, dim=2)
 
         # 找到每行第一个匹配的索引
