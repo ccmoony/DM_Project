@@ -9,7 +9,9 @@ from dataclasses import dataclass
 from transformers.modeling_outputs import ModelOutput
 from vq import RQVAE
 from layers import *
+from fusion_layers import MultiLayerInterestFusion, AdaptiveInterestFusion
 from sentence_transformers import SentenceTransformer
+from utils.utils import get_sentence_transformer_config
 
 
 @dataclass
@@ -55,13 +57,62 @@ class Model(nn.Module, GenerationMixin):
         dec_adapter_layers = [self.hidden_size] + [self.semantic_hidden_size]
         self.dec_adapter = MLPLayers(layers=dec_adapter_layers)
 
-        self.interest_encoder = SentenceTransformer("all-MiniLM-L6-v2", device=self.device)
+        # Get SentenceTransformer configuration
+        model_name, embedding_dim, batch_size, max_seq_length = get_sentence_transformer_config(config)
+        
+        self.interest_encoder = SentenceTransformer(model_name, device=self.device)
         self.interest_encoder.eval()
-        self.interest_proj = nn.Linear(384, config['e_dim'])
-        self.interest_fusion = nn.MultiheadAttention(
-            embed_dim=config['e_dim'], 
-            num_heads=8
-        )
+        self.interest_proj = nn.Linear(embedding_dim, config['e_dim'])
+        
+        
+        fusion_type = config.get('fusion_type', 'simple')  # 'simple', 'transformer', 'adaptive'
+        self.num_fusion_layers = config.get('num_fusion_layers', 3)
+        
+        if fusion_type == 'simple':
+            # Multiple layers of MultiheadAttention
+            self.interest_fusion_layers = nn.ModuleList([
+                nn.MultiheadAttention(
+                    embed_dim=config['e_dim'], 
+                    num_heads=4,
+                    batch_first=True,
+                    add_bias_kv=False
+                ) for _ in range(self.num_fusion_layers)
+            ])
+            self.fusion_layer_norms = nn.ModuleList([
+                nn.LayerNorm(config['e_dim']) for _ in range(self.num_fusion_layers)
+            ])
+            self.fusion_type = 'simple'
+            
+        elif fusion_type == 'transformer':
+            # Transformer Encoder block for interest fusion
+            self.interest_fusion = MultiLayerInterestFusion(
+                embed_dim=config['e_dim'],
+                num_layers=self.num_fusion_layers,
+                num_heads=8,
+                dropout=config.get('fusion_dropout', 0.1),
+                fusion_strategy=config.get('fusion_strategy', 'weighted')  # 'last', 'weighted', 'concat'
+            )
+            self.fusion_type = 'transformer'
+            
+        elif fusion_type == 'adaptive':
+            # Adaptive Interest Fusion
+            self.interest_fusion = AdaptiveInterestFusion(
+                embed_dim=config['e_dim'],
+                num_layers=self.num_fusion_layers,
+                num_heads=8,
+                dropout=config.get('fusion_dropout', 0.1)
+            )
+            self.fusion_type = 'adaptive'
+            
+        else:
+            # Single layer MultiheadAttention as default
+            self.interest_fusion = nn.MultiheadAttention(
+                embed_dim=config['e_dim'], 
+                num_heads=8,
+                batch_first=True,
+                add_bias_kv=False
+            )
+            self.fusion_type = 'single'
         
         # Interest cache for faster encoding
         self.interests_cache = None
@@ -158,6 +209,9 @@ class Model(nn.Module, GenerationMixin):
         # fusion with interests
         if interests is None:
             interests = [""] * input_ids.shape[0]
+
+        # if all(interest.strip() == "" for interest in interests):
+        #     print("Warning: All interests are empty strings. Using empty interests embedding.")
         
         # Use cached embeddings if available
         if self.interests_cache is not None:
@@ -176,11 +230,46 @@ class Model(nn.Module, GenerationMixin):
             interests_embed = torch.tensor(interests_embed, device=self.device, dtype=torch.float32)
         
         interests_embed_proj = self.interest_proj(interests_embed)
-        seq_last_latents, _ = self.interest_fusion(
-            query = interests_embed_proj,
-            key = seq_last_latents,
-            value = seq_last_latents
-        )
+        
+        # 根据融合类型选择不同的融合策略
+        if self.fusion_type == 'simple':
+            # 方案1：简单多层融合
+            query = interests_embed_proj
+            key_value = seq_last_latents
+            
+            for i, (attn_layer, norm_layer) in enumerate(zip(self.interest_fusion_layers, self.fusion_layer_norms)):
+                attention_output, _ = attn_layer(
+                    query=query,
+                    key=key_value,
+                    value=key_value,
+                )
+                query = norm_layer(query + attention_output)
+            
+            seq_last_latents = seq_last_latents + query
+            
+        elif self.fusion_type == 'transformer':
+            # 方案2：Transformer 编码器块式融合
+            interests_expanded = interests_embed_proj.unsqueeze(1)  # (batch_size, 1, embed_dim)
+            seq_expanded = seq_last_latents.unsqueeze(1)  # (batch_size, 1, embed_dim)
+            
+            fused_interests = self.interest_fusion(interests_expanded, seq_expanded)
+            fused_interests = fused_interests.squeeze(1)  # (batch_size, embed_dim)
+            
+            seq_last_latents = seq_last_latents + fused_interests
+            
+        elif self.fusion_type == 'adaptive':
+            # 方案3：自适应融合
+            interests_expanded = interests_embed_proj.unsqueeze(1)  # (batch_size, 1, embed_dim)
+            seq_last_latents = self.interest_fusion(interests_expanded, seq_last_latents)
+            
+        else:
+            # 原始单层融合
+            attention_output, _ = self.interest_fusion(
+                query=interests_embed_proj,
+                key=seq_last_latents,
+                value=seq_last_latents,
+            )
+            seq_last_latents = seq_last_latents + attention_output
 
         seq_project_latents = self.enc_adapter(seq_last_latents)
         
@@ -287,6 +376,18 @@ class Model(nn.Module, GenerationMixin):
                 input_ids, attention_mask, batch_size, num_beams
             )
         
+        # Expand interests to match beam search expansion
+        if interests is not None:
+            if isinstance(interests, list):
+                # For list of strings, repeat each interest for each beam
+                expanded_interests = []
+                for interest in interests:
+                    expanded_interests.extend([interest] * num_beams)
+                interests = expanded_interests
+            else:
+                # For tensor, use repeat_interleave
+                interests = interests.repeat_interleave(num_beams, dim=0)
+        
         inputs_embeds = self.get_input_embeddings(input_ids, attention_mask)
 
         # Store encoder_outputs to prevent running full forward path repeatedly
@@ -317,7 +418,7 @@ class Model(nn.Module, GenerationMixin):
             )
 
         # (batch_size * num_beams, ) -> (batch_size * num_return_sequences, )
-        selection_mask = torch.zeros(batch_size, num_beams, dtype=bool)
+        selection_mask = torch.zeros(batch_size, num_beams, dtype=torch.bool)
         selection_mask[:, :num_return_sequences] = True
 
         if return_score:

@@ -8,12 +8,13 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 
 
-def build_interests_cache(interests_dict, device='cuda'):
+def build_interests_cache(interests_dict, config, device='cuda'):
     """
     Build a cache for interests embeddings to avoid repeated encoding during training.
     
     Args:
         interests_dict: Dictionary containing interests for train/valid/test sets
+        config: Configuration dictionary containing SentenceTransformer settings
         device: Device to load the sentence transformer on
         
     Returns:
@@ -31,12 +32,17 @@ def build_interests_cache(interests_dict, device='cuda'):
     all_interests = list(all_interests)
     print(f"Found {len(all_interests)} unique interests")
     
+    # Get SentenceTransformer configuration
+    model_name, embedding_dim, batch_size, max_seq_length = get_sentence_transformer_config(config)
+    
+    print(f"Using SentenceTransformer: {model_name} (embedding_dim: {embedding_dim})")
+    
     # Initialize sentence transformer
-    interest_encoder = SentenceTransformer("all-MiniLM-L6-v2", device=device)
+    interest_encoder = SentenceTransformer(model_name, device=device)
     interest_encoder.eval()
     
     # Encode all unique interests
-    interests_embeddings = interest_encoder.encode(all_interests, show_progress_bar=True, batch_size=512)
+    interests_embeddings = interest_encoder.encode(all_interests, show_progress_bar=True, batch_size=batch_size)
     
     # Build cache dictionary
     interests_cache = {}
@@ -44,7 +50,8 @@ def build_interests_cache(interests_dict, device='cuda'):
         interests_cache[interest] = torch.tensor(embedding, dtype=torch.float32)
     
     # Add empty string mapping
-    empty_embedding = torch.zeros(384, dtype=torch.float32)  # 384 is the embedding dimension for all-MiniLM-L6-v2
+    # Use zero vector to represent "no interest" - this ensures no bias in attention fusion
+    empty_embedding = torch.zeros(embedding_dim, dtype=torch.float32)
     interests_cache[""] = empty_embedding
     
     print(f"Interests cache built with {len(interests_cache)} entries")
@@ -95,7 +102,7 @@ def load_split_data(config):
         # Build interests cache
         interests_cache = None
         if not config["no_cache"]:
-            interests_cache = build_interests_cache(interests_dict, config.get('device', 'cpu'))
+            interests_cache = build_interests_cache(interests_dict, config, config.get('device', 'cpu'))
     
     n_items = len(item2id)
 

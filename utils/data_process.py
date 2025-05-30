@@ -4,9 +4,11 @@ from tqdm import tqdm
 import pandas as pd
 from vllm import LLM, SamplingParams
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import multiprocessing
 
-dataset = "scientific"
-dataset_full_name = "Industrial_and_Scientific"
+dataset = "game"
+dataset_full_name = "Video_Games"
 
 dataset_path = f"dataset/{dataset}/"
 
@@ -51,8 +53,55 @@ if __name__ == "__main__":
     sampling_params = SamplingParams(temperature=0.6, 
                                     top_p=0.95,
                                     max_tokens=1024,)
-    llm = LLM(model="Qwen/Qwen3-4B")
+    llm = LLM(model="Qwen/Qwen3-4B", tensor_parallel_size=4)
     tokenizer = llm.get_tokenizer()
+
+    def truncate_prompt_if_needed(messages, tokenizer, max_tokens=40000):
+        """Truncate prompt if it exceeds token limit"""
+        prompt_text = tokenizer.apply_chat_template(
+            [messages],
+            tokenize=False,
+            add_generation_prompt=True
+        )[0]
+        
+        # Tokenize to check length
+        tokens = tokenizer.encode(prompt_text)
+        
+        if len(tokens) <= max_tokens:
+            return messages
+        
+        # If too long, truncate the user content (browsing history)
+        user_content = messages[1]["content"]
+        system_content = messages[0]["content"]
+        
+        # Calculate how much space we need for system message and formatting
+        system_tokens = len(tokenizer.encode(system_content))
+        format_overhead = 200  # Reserve some tokens for chat template formatting
+        available_tokens = max_tokens - system_tokens - format_overhead
+        
+        # Truncate user content to fit within available tokens
+        user_tokens = tokenizer.encode(user_content)
+        if len(user_tokens) > available_tokens:
+            # Truncate from the beginning, keeping the most recent items
+            truncated_tokens = user_tokens[-available_tokens:]
+            truncated_content = tokenizer.decode(truncated_tokens)
+            
+            # Try to find a good cut point (start of an item)
+            lines = truncated_content.split('\n')
+            # Find the first complete item (starts with a number)
+            for i, line in enumerate(lines):
+                if re.match(r'^\d+\.\s*{', line.strip()):
+                    truncated_content = '\n'.join(lines[i:])
+                    break
+            
+            messages[1]["content"] = truncated_content
+        
+        return messages
+
+    def truncate_single_message(args):
+        """Wrapper function for parallel processing"""
+        messages, tokenizer = args
+        return truncate_prompt_if_needed(messages, tokenizer)
 
     def process_file(input_file, output_path, meta_lookup_df, llm, tokenizer):
         with open(output_path, "w") as f:
@@ -91,13 +140,47 @@ if __name__ == "__main__":
                     }
                 ])
 
+            # Truncate prompts that are too long using parallel processing
+            truncated_messages_list = []
+            
+            # Determine the number of workers (use CPU count but limit it)
+            max_workers = min(multiprocessing.cpu_count(), len(messages_list), 8)
+            
+            # Prepare arguments for parallel processing
+            args_list = [(messages, tokenizer) for messages in messages_list]
+            
+            # Process in parallel with progress bar
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Submit all tasks
+                future_to_index = {executor.submit(truncate_single_message, args): i 
+                                 for i, args in enumerate(args_list)}
+                
+                # Initialize results list
+                truncated_messages_list = [None] * len(messages_list)
+                
+                # Collect results with progress bar
+                with tqdm(total=len(messages_list), dynamic_ncols=True, desc=f"Filtering items") as pbar:
+                    for future in as_completed(future_to_index):
+                        index = future_to_index[future]
+                        try:
+                            result = future.result()
+                            truncated_messages_list[index] = result
+                        except Exception as exc:
+                            print(f"Message {index} generated an exception: {exc}")
+                            # Keep the original message if truncation fails
+                            truncated_messages_list[index] = messages_list[index]
+                        pbar.update(1)
+
             prompts = tokenizer.apply_chat_template(
-                messages_list,
+                truncated_messages_list,
                 tokenize=False,
                 add_generation_prompt=True
             )
 
             outputs = llm.generate(prompts, sampling_params)
+            # outputs = []
+
+            invalid_count = 0
 
             for i, output in enumerate(outputs):
                 prompt = output.prompt
@@ -108,7 +191,6 @@ if __name__ == "__main__":
                 interests_matches = re.findall(r"<interest>(.*?)</interest>", generated_text)
                 interests = "\\n".join(interests_matches)
                 
-                invalid_count = 0
 
                 if interests == "":
                     invalid_count += 1
@@ -120,11 +202,11 @@ if __name__ == "__main__":
                     # # Print the full generated text to debug
                     # print(f"Generated text: {generated_text}")
                 
-                print(f"Total invalid interests found: {invalid_count}")
 
                 new_items[i]["interests"] = interests
 
                 f.write(json.dumps(new_items[i]) + "\n")
+            print(f"Total invalid interests found: {invalid_count}")
             
     process_file(testtest_data, processed_testtest_path, meta_df, llm, tokenizer)
     process_file(valid_data, processed_valid_path, meta_df, llm, tokenizer)
