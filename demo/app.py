@@ -11,10 +11,10 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
 recommender = Recommender(
-        config_path = "/home/yjchen/workspace/homework/ETEGRec/config/scientific.yaml",
-        model_path="/home/yjchen/workspace/homework/ETEGRec/myckpt/scientific/May-28-2025_15-05-20270c/83.pt",
-        code_path="/home/yjchen/workspace/homework/ETEGRec/myckpt/scientific/May-28-2025_15-05-20270c/83.code.json",
-        rqvae_path="/home/yjchen/workspace/homework/ETEGRec/myckpt/scientific/May-28-2025_15-05-20270c/83.pt.rqvae",
+        config_path = "./config/scientific.yaml",
+        model_path="../myckpt/scientific/May-28-2025_15-05-20270c/83.pt",
+        code_path="../myckpt/scientific/May-28-2025_15-05-20270c/83.code.json",
+        rqvae_path="../myckpt/scientific/May-28-2025_15-05-20270c/83.pt.rqvae",
         device="cpu",
     )
 
@@ -34,7 +34,6 @@ def init_purchases(f):
     return decorated_function
 
 def get_recommendations(purchase_history):
-    # 使用全局的 recommender 实例
     global recommender
     
     purchased_ids = [item['id'] for item in purchase_history]
@@ -101,4 +100,4 @@ def clear_history():
     return redirect(url_for('purchase_history'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5003)
+    app.run(debug=True, port=5000)

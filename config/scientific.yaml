@@ -34,7 +34,7 @@ eval_batch_size: 32
 num_workers: 8
 eval_step: 2
 learner: AdamW
-data_path: /home/yjchen/workspace/homework/ETEGRec/dataset
+data_path: ./dataset
 lr_scheduler_type: cosine
 gradient_accumulation_steps: 1
 
