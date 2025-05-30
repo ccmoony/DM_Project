@@ -17,4 +17,6 @@ accelerate launch --config_file accelerate_config_ddp.yaml main.py \
     --rec_kl_loss=0.0001 \
     --rec_dec_cl_loss=0.0003 \
     --id_kl_loss=0.0001 \
-    --id_dec_cl_loss=0.0003
+    --id_dec_cl_loss=0.0003 \
+    --interest_fusion=true \
+    # --debug

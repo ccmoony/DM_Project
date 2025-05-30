@@ -9,13 +9,13 @@ from tqdm import tqdm
 import json
 import math
 from colorama import init
-from utils import ensure_dir, set_color, get_local_time
+from utils.utils import ensure_dir, set_color, get_local_time
 from accelerate import PartialState
 from model import Model
 from transformers import get_linear_schedule_with_warmup, get_constant_schedule_with_warmup
 from transformers.optimization import get_scheduler
 from metrics import *
-from utils import *
+from utils.utils import *
 from collections import defaultdict
 from logging import getLogger
 init(autoreset=True)
@@ -218,7 +218,7 @@ class Trainer(object):
         iter_data = tqdm(
                     self.train_data,
                     total=len(self.train_data),
-                    ncols=100,
+                    dynamic_ncols=True,
                     desc=set_color(f"Train {epoch_idx}","pink"),
                     disable=(not verbose) or (not self.accelerator.is_main_process),
                     )
@@ -229,6 +229,10 @@ class Trainer(object):
                 total_num += 1
                 
                 self.rec_optimizer.zero_grad()
+
+                interests = batch['interests']
+
+                pass
                 
                 input_ids = batch['input_ids'].to(self.device)
                 attention_mask = batch["attention_mask"].to(self.device)
@@ -252,7 +256,8 @@ class Trainer(object):
 
                 outputs = self.model_rec(input_ids=input_ids,
                                          attention_mask=attention_mask,
-                                         labels=labels)
+                                         labels=labels,
+                                         interests = interests)
           
                 logits = outputs.logits  # (batch, code_len, code_num)
 
@@ -325,7 +330,7 @@ class Trainer(object):
         iter_data = tqdm(
                     self.train_data,
                     total=len(self.train_data),
-                    ncols=100,
+                    dynamic_ncols=True,
                     desc=set_color(f"Train {epoch_idx}","pink"),
                     disable=(not verbose) or (not self.accelerator.is_main_process),
                     )
@@ -694,7 +699,7 @@ class Trainer(object):
         iter_data = tqdm(
             test_data,
             total=len(test_data),
-            ncols=100,
+            dynamic_ncols=True,
             desc=set_color(f"Evaluate   ", "pink"),
             disable=(not verbose) or (not self.accelerator.is_main_process),
         )
@@ -712,8 +717,8 @@ class Trainer(object):
         item_code = torch.tensor(code).to(self.device)
 
         for batch_idx, data in enumerate(iter_data):
-            input_ids, attention_mask, labels \
-                = data["input_ids"].to(self.device), data["attention_mask"].to(self.device), data["targets"].to(self.device)
+            input_ids, attention_mask, labels, interests \
+                = data["input_ids"].to(self.device), data["attention_mask"].to(self.device), data["targets"].to(self.device), data["interests"]
 
             B = input_ids.size(0)
             input_ids = item_code[input_ids].contiguous().clone().view(B, -1)
@@ -721,12 +726,12 @@ class Trainer(object):
             attention_mask = (input_ids != -1).bool() 
 
             if dist.is_initialized():
-                preds = self.model_rec.module.generate(input_ids=input_ids, attention_mask=attention_mask, n_return_sequences=10)
+                preds = self.model_rec.module.generate(input_ids=input_ids, attention_mask=attention_mask, n_return_sequences=10, interests=interests)
                 all_preds, all_labels = self.accelerator.gather_for_metrics((preds, labels))
                 _metrics = self.evaluate(all_preds, all_labels)
                 total += len(all_labels)
             else:
-                preds = self.model_rec.generate(input_ids=input_ids, attention_mask=attention_mask, n_return_sequences=10)
+                preds = self.model_rec.generate(input_ids=input_ids, attention_mask=attention_mask, n_return_sequences=10, interests=interests)
                 _metrics = self.evaluate(preds, labels)
                 total += len(labels)
 

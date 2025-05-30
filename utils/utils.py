@@ -401,3 +401,38 @@ def log(message, accelerator, logger, level='info'):
         else:
             raise ValueError(f'Invalid log level: {level}')
 
+
+def get_sentence_transformer_config(config):
+    """
+    Get SentenceTransformer configuration from config dictionary.
+    
+    Args:
+        config: Configuration dictionary containing SentenceTransformer settings
+        
+    Returns:
+        tuple: (model_name, embedding_dim, batch_size, max_seq_length)
+    """
+    st_model_key = config.get('sentence_transformer_model', 'sentence-t5-xl')
+    st_configs = config.get('sentence_transformer_configs', {})
+    
+    # Default configuration if not found
+    default_config = {
+        'model_name': 'sentence-transformers/sentence-t5-xl',
+        'embedding_dim': 768,
+        'batch_size': 32,
+        'max_seq_length': 512
+    }
+    
+    if st_model_key not in st_configs:
+        print(f"Warning: SentenceTransformer model '{st_model_key}' not found in configuration, using default")
+        st_config = default_config
+    else:
+        st_config = st_configs[st_model_key]
+    
+    model_name = st_config.get('model_name', default_config['model_name'])
+    embedding_dim = st_config.get('embedding_dim', default_config['embedding_dim'])
+    batch_size = st_config.get('batch_size', default_config['batch_size'])
+    max_seq_length = st_config.get('max_seq_length', default_config['max_seq_length'])
+    
+    return model_name, embedding_dim, batch_size, max_seq_length
+

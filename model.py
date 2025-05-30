@@ -9,6 +9,9 @@ from dataclasses import dataclass
 from transformers.modeling_outputs import ModelOutput
 from vq import RQVAE
 from layers import *
+from fusion_layers import MultiLayerInterestFusion, AdaptiveInterestFusion
+from sentence_transformers import SentenceTransformer
+from utils.utils import get_sentence_transformer_config
 
 
 @dataclass
@@ -53,9 +56,74 @@ class Model(nn.Module, GenerationMixin):
         dec_adapter_layers = config['layers'][::-1]
         dec_adapter_layers = [self.hidden_size] + [self.semantic_hidden_size]
         self.dec_adapter = MLPLayers(layers=dec_adapter_layers)
+
+        # Get SentenceTransformer configuration
+        model_name, embedding_dim, batch_size, max_seq_length = get_sentence_transformer_config(config)
+        
+        self.interest_encoder = SentenceTransformer(model_name, device=self.device)
+        self.interest_encoder.eval()
+        self.interest_proj = nn.Linear(embedding_dim, config['e_dim'])
+        
+        
+        fusion_type = config.get('fusion_type', 'simple')  # 'simple', 'transformer', 'adaptive'
+        self.num_fusion_layers = config.get('num_fusion_layers', 3)
+        
+        if fusion_type == 'simple':
+            # Multiple layers of MultiheadAttention
+            self.interest_fusion_layers = nn.ModuleList([
+                nn.MultiheadAttention(
+                    embed_dim=config['e_dim'], 
+                    num_heads=4,
+                    batch_first=True,
+                    add_bias_kv=False
+                ) for _ in range(self.num_fusion_layers)
+            ])
+            self.fusion_layer_norms = nn.ModuleList([
+                nn.LayerNorm(config['e_dim']) for _ in range(self.num_fusion_layers)
+            ])
+            self.fusion_type = 'simple'
+            
+        elif fusion_type == 'transformer':
+            # Transformer Encoder block for interest fusion
+            self.interest_fusion = MultiLayerInterestFusion(
+                embed_dim=config['e_dim'],
+                num_layers=self.num_fusion_layers,
+                num_heads=8,
+                dropout=config.get('fusion_dropout', 0.1),
+                fusion_strategy=config.get('fusion_strategy', 'weighted')  # 'last', 'weighted', 'concat'
+            )
+            self.fusion_type = 'transformer'
+            
+        elif fusion_type == 'adaptive':
+            # Adaptive Interest Fusion
+            self.interest_fusion = AdaptiveInterestFusion(
+                embed_dim=config['e_dim'],
+                num_layers=self.num_fusion_layers,
+                num_heads=8,
+                dropout=config.get('fusion_dropout', 0.1)
+            )
+            self.fusion_type = 'adaptive'
+            
+        else:
+            # Single layer MultiheadAttention as default
+            self.interest_fusion = nn.MultiheadAttention(
+                embed_dim=config['e_dim'], 
+                num_heads=8,
+                batch_first=True,
+                add_bias_kv=False
+            )
+            self.fusion_type = 'single'
+        
+        # Interest cache for faster encoding
+        self.interests_cache = None
         
         # parameters initialization
         self.apply(self._init_weights)
+    
+    def set_interests_cache(self, interests_cache):
+        """Set the interests cache for faster encoding during training."""
+        self.interests_cache = interests_cache
+        print(f"Interests cache set with {len(interests_cache)} entries")
 
     def _init_weights(self, module):
         """Initialize the weights"""
@@ -94,7 +162,7 @@ class Model(nn.Module, GenerationMixin):
         return inputs_embeds
     
     def forward(self, input_ids=None, inputs_embeds=None, attention_mask=None, labels=None, decoder_input_ids=None,
-                decoder_inputs_embeds=None, encoder_outputs=None, **kwargs):
+                decoder_inputs_embeds=None, encoder_outputs=None, interests=None, **kwargs):
         
         if input_ids is not None:
             inputs_embeds = self.get_input_embeddings(input_ids, attention_mask)
@@ -136,6 +204,73 @@ class Model(nn.Module, GenerationMixin):
         # mean pooling
         seq_latents[~attention_mask] = 0
         seq_last_latents = torch.sum(seq_latents, dim=1) / attention_mask.sum(dim=1).unsqueeze(1)
+        # seq_project_latents = self.enc_adapter(seq_last_latents)
+
+        # fusion with interests
+        if interests is None:
+            interests = [""] * input_ids.shape[0]
+
+        # if all(interest.strip() == "" for interest in interests):
+        #     print("Warning: All interests are empty strings. Using empty interests embedding.")
+        
+        # Use cached embeddings if available
+        if self.interests_cache is not None:
+            interests_embed = []
+            for interest in interests:
+                if interest in self.interests_cache:
+                    interests_embed.append(self.interests_cache[interest])
+                else:
+                    # Fallback to real-time encoding for unknown interests
+                    fallback_embed = self.interest_encoder.encode([interest], show_progress_bar=False)
+                    interests_embed.append(torch.tensor(fallback_embed[0], device=self.device, dtype=torch.float32))
+            interests_embed = torch.stack(interests_embed, dim=0).to(self.device)
+        else:
+            # Original real-time encoding
+            interests_embed = self.interest_encoder.encode(interests, show_progress_bar=False)
+            interests_embed = torch.tensor(interests_embed, device=self.device, dtype=torch.float32)
+        
+        interests_embed_proj = self.interest_proj(interests_embed)
+        
+        # 根据融合类型选择不同的融合策略
+        if self.fusion_type == 'simple':
+            # 方案1：简单多层融合
+            query = interests_embed_proj
+            key_value = seq_last_latents
+            
+            for i, (attn_layer, norm_layer) in enumerate(zip(self.interest_fusion_layers, self.fusion_layer_norms)):
+                attention_output, _ = attn_layer(
+                    query=query,
+                    key=key_value,
+                    value=key_value,
+                )
+                query = norm_layer(query + attention_output)
+            
+            seq_last_latents = seq_last_latents + query
+            
+        elif self.fusion_type == 'transformer':
+            # 方案2：Transformer 编码器块式融合
+            interests_expanded = interests_embed_proj.unsqueeze(1)  # (batch_size, 1, embed_dim)
+            seq_expanded = seq_last_latents.unsqueeze(1)  # (batch_size, 1, embed_dim)
+            
+            fused_interests = self.interest_fusion(interests_expanded, seq_expanded)
+            fused_interests = fused_interests.squeeze(1)  # (batch_size, embed_dim)
+            
+            seq_last_latents = seq_last_latents + fused_interests
+            
+        elif self.fusion_type == 'adaptive':
+            # 方案3：自适应融合
+            interests_expanded = interests_embed_proj.unsqueeze(1)  # (batch_size, 1, embed_dim)
+            seq_last_latents = self.interest_fusion(interests_expanded, seq_last_latents)
+            
+        else:
+            # 原始单层融合
+            attention_output, _ = self.interest_fusion(
+                query=interests_embed_proj,
+                key=seq_last_latents,
+                value=seq_last_latents,
+            )
+            seq_last_latents = seq_last_latents + attention_output
+
         seq_project_latents = self.enc_adapter(seq_last_latents)
         
         dec_latents = model_outputs.decoder_hidden_states[-1].clone()
@@ -151,17 +286,21 @@ class Model(nn.Module, GenerationMixin):
         return outputs
     
     def generate(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, n_return_sequences: int = 1,
-                 prefix_allowed_tokens_fn=None) -> torch.Tensor:
+                 prefix_allowed_tokens_fn=None, interests=None) -> torch.Tensor:
         """
         Generates sequences using beam search algorithm.
 
         Args:
             batch (dict): A dictionary containing input_ids and attention_mask.
             n_return_sequences (int): The number of sequences to generate.
+            interests: User interests to be passed to the model.
 
         Returns:
             torch.Tensor: The generated sequences.
         """
+        # Store interests temporarily for use in forward pass
+        self._current_interests = interests
+        
         if prefix_allowed_tokens_fn is not None:
             inputs_embeds = self.get_input_embeddings(input_ids, attention_mask)
             outputs = super().generate(
@@ -179,8 +318,13 @@ class Model(nn.Module, GenerationMixin):
                 max_length=self.code_length+1,
                 num_beams=self.num_beams,
                 num_return_sequences=n_return_sequences,
-                return_score=False
+                return_score=False,
+                interests=interests
             )
+        
+        # Clear stored interests
+        self._current_interests = None
+        
         outputs = outputs[:, 1:].reshape(-1, n_return_sequences, self.code_length)
         return outputs
 
@@ -191,7 +335,8 @@ class Model(nn.Module, GenerationMixin):
         max_length=6,
         num_beams=1,
         num_return_sequences=1,
-        return_score=False
+        return_score=False,
+        interests=None
     ):
         """
         Adpated from huggingface's implementation
@@ -231,6 +376,18 @@ class Model(nn.Module, GenerationMixin):
                 input_ids, attention_mask, batch_size, num_beams
             )
         
+        # Expand interests to match beam search expansion
+        if interests is not None:
+            if isinstance(interests, list):
+                # For list of strings, repeat each interest for each beam
+                expanded_interests = []
+                for interest in interests:
+                    expanded_interests.extend([interest] * num_beams)
+                interests = expanded_interests
+            else:
+                # For tensor, use repeat_interleave
+                interests = interests.repeat_interleave(num_beams, dim=0)
+        
         inputs_embeds = self.get_input_embeddings(input_ids, attention_mask)
 
         # Store encoder_outputs to prevent running full forward path repeatedly
@@ -247,7 +404,8 @@ class Model(nn.Module, GenerationMixin):
                 outputs = self.forward(
                     encoder_outputs=encoder_outputs,
                     attention_mask=attention_mask,
-                    decoder_input_ids=decoder_input_ids
+                    decoder_input_ids=decoder_input_ids,
+                    interests=interests
                 )
 
             decoder_input_ids, beam_scores = self.beam_search_step(
@@ -260,7 +418,7 @@ class Model(nn.Module, GenerationMixin):
             )
 
         # (batch_size * num_beams, ) -> (batch_size * num_return_sequences, )
-        selection_mask = torch.zeros(batch_size, num_beams, dtype=bool)
+        selection_mask = torch.zeros(batch_size, num_beams, dtype=torch.bool)
         selection_mask[:, :num_return_sequences] = True
 
         if return_score:

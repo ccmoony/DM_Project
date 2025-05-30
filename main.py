@@ -2,38 +2,40 @@ import yaml
 import argparse
 import warnings
 import torch
-from data import load_split_data
-from data import SequentialSplitDataset, Collator
+from utils.data import load_split_data
+from utils.data import SequentialSplitDataset, Collator
 from torch.utils.data import DataLoader
 from trainer import Trainer
 from transformers import T5Config, T5ForConditionalGeneration
 from accelerate import Accelerator
 from model import Model
-from utils import *
+from utils.utils import *
 from vq import RQVAE
 from logging import getLogger
 warnings.filterwarnings("ignore")
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--config', type=str, default="./config/scientific.yaml")
+    parser.add_argument('--debug', action='store_true', help='Debug mode')
 
     args, unknown_args = parser.parse_known_args()
     return args, unknown_args
 
 
-def train(config, verbose=True, rank=0):
+def train(config, accelerator=None, verbose=True, rank=0):
     init_seed(config['seed'], config['reproducibility'])
     init_logger(config)
 
     logger = getLogger()
-    accelerator = config['accelerator']
     
     log(f'Device: {config["device"]}', accelerator, logger)
     log(f'Config: {str(config)}', accelerator, logger)
 
-    item2id, num_items, train, valid, test = load_split_data(config)
+    item2id, num_items, train, valid, test, interests, interests_cache = load_split_data(config)
     code_num = config['code_num']
     code_length = config['code_length'] # current length of the code
     eos_token_id = -1
@@ -46,7 +48,7 @@ def train(config, verbose=True, rank=0):
     semantic_emb_path = os.path.join(dataset_path, config["semantic_emb_path"])
     
     
-    accelerator.wait_for_everyone()
+    accelerator.wait_for_everyone() if accelerator else None
     # Initialize the model with the custom configuration
     model_config = T5Config(
             num_layers=config['encoder_layers'], 
@@ -75,6 +77,10 @@ def train(config, verbose=True, rank=0):
     model_rec.semantic_embedding.weight.data[1:] = torch.tensor(semantic_emb).to(config['device'])
     model_id = RQVAE(config=config, in_dim=model_rec.semantic_hidden_size)
     
+    # Set interests cache if available
+    if interests_cache is not None:
+        model_rec.set_interests_cache(interests_cache)
+    
     log(model_rec, accelerator, logger)
     log(model_id, accelerator, logger)
 
@@ -82,9 +88,9 @@ def train(config, verbose=True, rank=0):
     if rqvae_path is not None:
         safe_load(model_id, rqvae_path, verbose)
 
-    train_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=train)
-    valid_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=valid)
-    test_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=test)
+    train_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=train, interests=interests["train"] if interests else None)
+    valid_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=valid, interests=interests["valid"] if interests else None)
+    test_dataset = SequentialSplitDataset(config=config, n_items=num_items, inter_seq=test, interests=interests["test"] if interests else None)
 
     collator = Collator(eos_token_id=eos_token_id, pad_token_id=0, max_length=config['max_length'])
 
@@ -106,7 +112,7 @@ def train(config, verbose=True, rank=0):
     test_results = trainer.test()
     
     
-    if accelerator.is_main_process:
+    if accelerator and accelerator.is_main_process:
         log(f"Pre Best Validation Score: {best_score_pre}", accelerator, logger)
         log(f"Pre Test Results: {test_results_pre}", accelerator, logger)
         log(f"Best Validation Score: {best_score}", accelerator, logger)
@@ -116,6 +122,13 @@ def train(config, verbose=True, rank=0):
 if __name__=="__main__":
     args, unparsed_args = parse_arguments()
     command_line_configs = parse_command_line_args(unparsed_args)
+
+    # Enable debugging mode if specified
+    if args.debug:
+        import debugpy
+        debugpy.listen(5678)
+        print("Debugging mode enabled. Connect to port 5678.")
+        debugpy.wait_for_client()
 
     # Config
     config = {}
@@ -140,10 +153,11 @@ if __name__=="__main__":
     config['save_path'] =f'./myckpt/{dataset}/{ckpt_name}'
     
     config = convert_config_dict(config)
-    config['accelerator'] = Accelerator()
+    # Create accelerator but don't store it directly in config
+    accelerator = Accelerator()
     
-        
-    train(config, verbose=local_rank==0, rank=local_rank)
+    # Pass accelerator separately to avoid pickling issues
+    train(config, accelerator=accelerator, verbose=local_rank==0, rank=local_rank)
 
     
 
