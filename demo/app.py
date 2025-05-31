@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, Response
 import json
 import random
 from functools import wraps
@@ -7,25 +7,39 @@ import sys
 from openai import OpenAI
 import re
 import os
+import threading
+from queue import Queue
+import time
+
 sys.path.append('..')
 from inference import Recommender
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
+# Global variables for recommendation system
 recommender = Recommender(
-        config_path = "./config/scientific_llm.yaml",
-        model_path="../myckpt/scientific/scientific_llm/93.pt",
-        code_path="../myckpt/scientific/scientific_llm/93.code.json",
-        rqvae_path="../myckpt/scientific/scientific_llm/93.pt.rqvae",
-        device="cpu",
-    )
+    config_path="./config/scientific_llm.yaml",
+    model_path="../myckpt/scientific/scientific_llm/93.pt",
+    code_path="../myckpt/scientific/scientific_llm/93.code.json",
+    rqvae_path="../myckpt/scientific/scientific_llm/93.pt.rqvae",
+    device="cpu",
+)
+
+# Add predicted interests storage
+predicted_interests = None
 
 client = OpenAI(
-    # 若没有配置环境变量，请用百炼API Key将下行替换为：api_key="sk-xxx",
-    api_key=os.getenv("DASHSCOPE_API_KEY"), # 如何获取API Key：https://help.aliyun.com/zh/model-studio/developer-reference/get-api-key
+    api_key=os.getenv("DASHSCOPE_API_KEY"),
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
 )
+
+# Recommendation task queue and status
+recommendation_queue = Queue()
+current_recommendation_task = None
+recommendation_in_progress = False
+recommendation_result = None
+recommendation_lock = threading.Lock()
 
 def load_products():
     products = []
@@ -33,7 +47,7 @@ def load_products():
         for line in f:
             products.append(json.loads(line))
     return products
-        
+
 def init_purchases(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -46,7 +60,6 @@ def get_prompt(purchase_history):
     prompt = "The user's browsing history is: \n"
 
     for i, product in enumerate(purchase_history):
-
         title = product["title"] if "title" in product else None
         main_category = product["main_category"] if "main_category" in product else None
         categories = product["categories"] if "categories" in product else None
@@ -76,8 +89,8 @@ def get_prompt(purchase_history):
 def extract_interests(purchase_history):
     messages_list = get_prompt(purchase_history)
     completion = client.chat.completions.create(
-    model="qwen-plus", # 模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
-    messages=messages_list,
+        model="qwen-plus",
+        messages=messages_list,
     )
     generated_text = completion.choices[0].message.content
     print(generated_text)
@@ -87,9 +100,10 @@ def extract_interests(purchase_history):
     return [interests]
 
 def get_recommendations(purchase_history):
-    global recommender
+    global recommender, predicted_interests
     
     interests = extract_interests(purchase_history)
+    predicted_interests = interests[0].split('\\n')  # Store the predicted interests
     purchased_ids = [item['id'] for item in purchase_history]
     
     recommended_ids = recommender.predict_next_item(purchased_ids, interests=interests)
@@ -103,16 +117,63 @@ def get_recommendations(purchase_history):
         if prod_id in product_dict and product_dict[prod_id] not in recommended_products:
             recommended_products.append(product_dict[prod_id])
     
-    return recommended_products  
+    return recommended_products
+
+def recommendation_worker():
+    global recommendation_in_progress, recommendation_result, current_recommendation_task, predicted_interests
+    
+    while True:
+        purchase_history = recommendation_queue.get()
+        
+        with recommendation_lock:
+            current_recommendation_task = purchase_history
+            recommendation_in_progress = True
+        
+        try:
+            # Get recommendations
+            recommendations = get_recommendations(purchase_history)
+            
+            with recommendation_lock:
+                # Only update if this is still the current task (no newer updates)
+                if current_recommendation_task == purchase_history:
+                    recommendation_result = recommendations
+                    recommendation_in_progress = False
+                    
+        except Exception as e:
+            print(f"Error in recommendation worker: {e}")
+            with recommendation_lock:
+                recommendation_in_progress = False
+        
+        recommendation_queue.task_done()
+        time.sleep(0.1)
+
+# Start the recommendation worker thread
+recommendation_thread = threading.Thread(target=recommendation_worker, daemon=True)
+recommendation_thread.start()
 
 @app.route('/')
 def index():
+    global recommendation_result, recommendation_in_progress, predicted_interests
+    
     products = load_products()
-    if 'purchases' in session and len(session['purchases'])>0:
-        displayed_products = get_recommendations(session['purchases'])
+    
+    # Check if we have purchases and should show recommendations
+    if 'purchases' in session and len(session['purchases']) > 0:
+        # Check if we have a recommendation result
+        with recommendation_lock:
+            if recommendation_result is not None:
+                displayed_products = recommendation_result
+            else:
+                displayed_products = random.sample(products, min(8, len(products)))
+                
+                # If no recommendation is in progress, start one
+                if not recommendation_in_progress:
+                    recommendation_queue.put(session['purchases'])
     else:
         displayed_products = random.sample(products, min(8, len(products)))
-    return render_template('index.html', products=displayed_products)
+        predicted_interests = None
+    
+    return render_template('index.html', products=displayed_products, predicted_interests=predicted_interests)
 
 @app.route('/purchase', methods=['POST'])
 @init_purchases
@@ -121,6 +182,7 @@ def purchase():
     product_name = request.form.get('product_name')
     product_image = request.form.get('product_image')
     
+    # Add to purchase history
     session['purchases'].append({
         'id': product_id,
         'name': product_name,
@@ -129,6 +191,13 @@ def purchase():
     })
     
     session.modified = True
+    
+    # Trigger new recommendation
+    with recommendation_lock:
+        global current_recommendation_task
+        current_recommendation_task = session['purchases']
+        recommendation_queue.put(session['purchases'])
+    
     return redirect(url_for('index'))
 
 @app.route('/purchase_history')
@@ -143,6 +212,14 @@ def delete_purchase(purchase_id):
     if 'purchases' in session:
         session['purchases'] = [p for p in session['purchases'] if p['id'] != purchase_id]
         session.modified = True
+        
+        # Trigger new recommendation if we have purchases left
+        if len(session['purchases']) > 0:
+            with recommendation_lock:
+                global current_recommendation_task
+                current_recommendation_task = session['purchases']
+                recommendation_queue.put(session['purchases'])
+    
     return redirect(url_for('purchase_history'))
 
 @app.route('/clear_history', methods=['POST'])
@@ -151,7 +228,34 @@ def clear_history():
     if 'purchases' in session:
         session['purchases'] = []
         session.modified = True
+        
+        # Clear any pending recommendations
+        with recommendation_lock:
+            global current_recommendation_task, recommendation_result
+            current_recommendation_task = None
+            recommendation_result = None
+    
     return redirect(url_for('purchase_history'))
+
+@app.route('/stream')
+def stream():
+    def generate():
+        last_interests = None
+        while True:
+            with recommendation_lock:
+                current_interests = predicted_interests
+            
+            if current_interests != last_interests:
+                if current_interests:
+                    data = json.dumps({
+                        'interests': current_interests
+                    })
+                    yield f"data: {data}\n\n"
+                last_interests = current_interests
+            
+            time.sleep(1)
+    
+    return Response(generate(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

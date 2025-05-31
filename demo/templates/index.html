@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <div class="interests-container" id="interests-section" style="display: none;">
+        <h2>Predicted Interests</h2>
+        <div class="interests-box" id="interests-box">
+        </div>
+    </div>
+    
     <div class="products-container">
         {% for product in products %}
         <div class="product-card">
@@ -15,4 +21,28 @@
         </div>
         {% endfor %}
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const evtSource = new EventSource("{{ url_for('stream') }}");
+            const interestsSection = document.getElementById('interests-section');
+            const interestsBox = document.getElementById('interests-box');
+
+            evtSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.interests && data.interests.length > 0) {
+                    interestsSection.style.display = 'block';
+                    interestsBox.innerHTML = data.interests
+                        .map(interest => `<div class="interest-item">${interest}</div>`)
+                        .join('');
+                } else {
+                    interestsSection.style.display = 'none';
+                }
+            };
+
+            evtSource.onerror = function(err) {
+                console.error("EventSource failed:", err);
+            };
+        });
+    </script>
 {% endblock %}
