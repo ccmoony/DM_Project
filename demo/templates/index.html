@@ -1,83 +1,90 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <!-- 兴趣标签部分 -->
     <div class="interests-container" id="interests-section" style="display: none;">
-        <h2>Predicted Interests</h2>
+        <div class="section-header">
+            <h2><i class="fas fa-tags"></i> Your Interests</h2>
+            <p class="section-description">Based on your browsing history</p>
+        </div>
         <div class="interests-box" id="interests-box">
         </div>
     </div>
     
-    <div class="products-container">
+    <!-- 主要产品展示区 -->
+    <div class="section-header">
+        <h2><i class="fas fa-fire"></i> Recommended For You</h2>
+        <p class="section-description">Products you might like based on your interests</p>
+    </div>
+    <div class="product-grid">
         {% for product in products %}
         <div class="product-card">
-            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
-                <img src="{{ product.image }}" alt="{{ product.name }}">
-                <h3>{{ product.name }}</h3>
-            </a>
-            <div class="button-group">
-                <form action="{{ url_for('purchase') }}" method="post">
-                    <input type="hidden" name="product_id" value="{{ product.id }}">
-                    <input type="hidden" name="product_name" value="{{ product.name }}">
-                    <input type="hidden" name="product_image" value="{{ product.image }}">
-                    <input type="hidden" name="product_description" value="{{ product.description }}">
-                    <button type="submit" class="purchase-btn">Purchase</button>
-                </form>
+            <div class="product-card-inner">
+                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
+                    <div class="product-image-container">
+                        <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image">
+                        <div class="product-overlay">
+                            <span class="view-details">View Details</span>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">{{ product.name }}</h3>
+                    </div>
+                </a>
+                <div class="product-actions">
+                    <form action="{{ url_for('purchase') }}" method="post">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="hidden" name="product_name" value="{{ product.name }}">
+                        <input type="hidden" name="product_image" value="{{ product.image }}">
+                        <input type="hidden" name="product_description" value="{{ product.description }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-shopping-cart"></i> Purchase
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
         {% endfor %}
     </div>
 
     {% if random_recommendations %}
-    <div class="random-recommendations">
-        <h2>You May Also Like</h2>
-        <div class="products-container">
+    <div class="recommendations">
+        <div class="section-header">
+            <h2><i class="fas fa-star"></i> Featured Products</h2>
+            <p class="section-description">Discover our latest collection</p>
+        </div>
+        <div class="product-grid">
             {% for product in random_recommendations %}
             <div class="product-card">
-                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
-                    <img src="{{ product.image }}" alt="{{ product.name }}">
-                    <h3>{{ product.name }}</h3>
-                </a>
-                <div class="button-group">
-                    <form action="{{ url_for('purchase') }}" method="post">
-                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                        <input type="hidden" name="product_name" value="{{ product.name }}">
-                        <input type="hidden" name="product_image" value="{{ product.image }}">
-                        <input type="hidden" name="product_description" value="{{ product.description }}">
-                        <button type="submit" class="purchase-btn">Purchase</button>
-                    </form>
+                <div class="product-card-inner">
+                    <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
+                        <div class="product-image-container">
+                            <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image">
+                            <div class="product-overlay">
+                                <span class="view-details">View Details</span>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-title">{{ product.name }}</h3>
+                        </div>
+                    </a>
+                    <div class="product-actions">
+                        <form action="{{ url_for('purchase') }}" method="post">
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            <input type="hidden" name="product_name" value="{{ product.name }}">
+                            <input type="hidden" name="product_image" value="{{ product.image }}">
+                            <input type="hidden" name="product_description" value="{{ product.description }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart"></i> Purchase
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
     {% endif %}
-
-    <style>
-    .product-link {
-        text-decoration: none;
-        color: inherit;
-        cursor: pointer;
-        display: block;
-    }
-
-    .product-link:hover {
-        opacity: 0.9;
-    }
-
-    .product-link img {
-        transition: transform 0.2s ease;
-    }
-
-    .product-link:hover img {
-        transform: scale(1.03);
-    }
-
-    .button-group {
-        display: flex;
-        justify-content: center;
-        margin-top: 10px;
-    }
-    </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -90,7 +97,7 @@
                 if (data.interests && data.interests.length > 0) {
                     interestsSection.style.display = 'block';
                     interestsBox.innerHTML = data.interests
-                        .map(interest => `<div class="interest-item">${interest}</div>`)
+                        .map(interest => `<div class="interest-item"><i class="fas fa-tag"></i> ${interest}</div>`)
                         .join('');
                 } else {
                     interestsSection.style.display = 'none';
@@ -100,6 +107,25 @@
             evtSource.onerror = function(err) {
                 console.error("EventSource failed:", err);
             };
+
+            // 添加搜索功能
+            const searchInput = document.querySelector('.search-input');
+            const productCards = document.querySelectorAll('.product-card');
+            
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                
+                productCards.forEach(card => {
+                    const title = card.querySelector('.product-title').textContent.toLowerCase();
+                    const description = card.querySelector('.product-description').textContent.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
         });
     </script>
 {% endblock %}

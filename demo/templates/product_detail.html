@@ -1,68 +1,84 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="product-detail-container">
-    <div class="product-detail-card">
-        <img src="{{ product.image }}" alt="{{ product.name }}" class="detail-image">
-        <h2>{{ product.name }}</h2>
-        <div class="description-box">
-            <h3>Description:</h3>
+<div class="product-detail">
+    <div class="product-detail-image-section">
+        <div class="product-image-container">
+            <img src="{{ product.image }}" alt="{{ product.name }}" class="product-detail-image">
+        </div>
+    </div>
+    <div class="product-detail-info">
+        <nav class="product-breadcrumb">
+            <a href="javascript:history.back()" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </nav>
+        
+        <h1 class="product-detail-title">{{ product.name }}</h1>
+        
+        <div class="product-meta">
+            <div class="product-rating">
+                {% set full_stars = (product.rating | float | round(1) / 1) | int %}
+                {% set half_star = (product.rating | float | round(1)) % 1 >= 0.5 %}
+                {% for i in range(full_stars) %}
+                    <i class="fas fa-star"></i>
+                {% endfor %}
+                {% if half_star %}
+                    <i class="fas fa-star-half-alt"></i>
+                {% endif %}
+                {% for i in range(5 - full_stars - (1 if half_star else 0)) %}
+                    <i class="far fa-star"></i>
+                {% endfor %}
+                <span>({{ "%.1f"|format(product.rating|float) }}/5)</span>
+            </div>
+            <div class="product-id">
+                <span>Product ID: {{ product.id }}</span>
+            </div>
+        </div>
+
+        <div class="product-detail-description">
+            <h3><i class="fas fa-info-circle"></i> Product Description</h3>
             <p>{{ product.description }}</p>
         </div>
-        <form action="{{ url_for('purchase') }}" method="post">
-            <input type="hidden" name="product_id" value="{{ product.id }}">
-            <input type="hidden" name="product_name" value="{{ product.name }}">
-            <input type="hidden" name="product_image" value="{{ product.image }}">
-            <input type="hidden" name="product_description" value="{{ product.description }}">
-            <button type="submit" class="purchase-btn">Purchase</button>
-        </form>
-        <button onclick="window.history.back()" class="back-btn">Back to Products</button>
+
+        <div class="product-actions">
+            <form action="{{ url_for('purchase') }}" method="post">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="product_name" value="{{ product.name }}">
+                <input type="hidden" name="product_image" value="{{ product.image }}">
+                <input type="hidden" name="product_description" value="{{ product.description }}">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <i class="fas fa-shopping-cart"></i> Purchase Now
+                </button>
+            </form>
+            <button onclick="history.back()" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Products
+            </button>
+        </div>
+
+        <div class="product-features">
+            <div class="feature-item">
+                <i class="fas fa-truck"></i>
+                <div class="feature-text">
+                    <h4>Fast Delivery</h4>
+                    <p>Free shipping on orders over $50</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-undo"></i>
+                <div class="feature-text">
+                    <h4>Easy Returns</h4>
+                    <p>30-day return policy</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-shield-alt"></i>
+                <div class="feature-text">
+                    <h4>Secure Payment</h4>
+                    <p>100% secure payment</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
-<style>
-.product-detail-container {
-    padding: 2rem;
-    display: flex;
-    justify-content: center;
-}
-
-.product-detail-card {
-    max-width: 800px;
-    width: 100%;
-    padding: 2rem;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.detail-image {
-    width: 100%;
-    max-height: 400px;
-    object-fit: contain;
-    margin-bottom: 1rem;
-}
-
-.description-box {
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 5px;
-}
-
-.back-btn {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    background: #6c757d;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-left: 1rem;
-}
-
-.back-btn:hover {
-    background: #5a6268;
-}
-</style>
 {% endblock %} 

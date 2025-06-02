@@ -3,24 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETEGRec Demo</title>
+    <title>ETEGRec Demo - Your Smart Shopping Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <header>
         <div class="header-container">
-            <h1>ETEGRec Demo</h1>
+            <div class="logo-container">
+                <h1><i class="fas fa-shopping-cart"></i> ETEGRec Demo</h1>
+            </div>
             <nav>
-                <a href="{{ url_for('index') }}">Home</a>
-                <a href="{{ url_for('purchase_history') }}">Purchase History ({{ session.purchases|length if 'purchases' in session else 0 }})</a>
+                <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('purchase_history') }}">
+                    <i class="fas fa-history"></i> Purchase History
+                    <span class="cart-count">{{ session.purchases|length if 'purchases' in session else 0 }}</span>
+                </a>
             </nav>
         </div>
     </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="message message-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <main>
         {% block content %}{% endblock %}
     </main>
+
     <footer>
-        <p>&copy; ETEGRec Demo</p>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About ETEGRec Demo</h3>
+                <p>Your smart shopping assistant powered by advanced recommendation technology.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('purchase_history') }}">Purchase History</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p><i class="fas fa-envelope"></i> support@etegrec.com</p>
+                <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 ETEGRec Demo. All rights reserved.</p>
+        </div>
     </footer>
 </body>
 </html>
