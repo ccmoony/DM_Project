@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, R
 import json
 import random
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 from openai import OpenAI
 import re
@@ -16,6 +16,36 @@ from inference import Recommender
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
+
+# Session configuration
+app.config.update(
+    SESSION_COOKIE_SECURE=False,  # Set to True if using HTTPS
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7)
+)
+
+def clear_all_sessions():
+    print("Clearing all sessions at startup")
+    if 'purchases' in session:
+        session.pop('purchases', None)
+    session.clear()
+
+def create_app():
+    with app.app_context():
+        # Register any initialization code here
+        pass
+    return app
+
+@app.before_request
+def session_management():
+    # Clear session on first request after startup
+    if not getattr(app, '_session_cleared', False):
+        clear_all_sessions()
+        app._session_cleared = True
+    
+    # Make session permanent
+    session.permanent = True
 
 # Global variables for recommendation system
 recommender = Recommender(
@@ -47,9 +77,17 @@ def load_products():
 def init_purchases(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'purchases' not in session:
+        try:
+            if 'purchases' not in session:
+                session['purchases'] = []
+                session.modified = True
+                print("Initialized empty purchases list in session")
+            return f(*args, **kwargs)
+        except Exception as e:
+            print(f"Error in init_purchases decorator: {e}")
             session['purchases'] = []
-        return f(*args, **kwargs)
+            session.modified = True
+            return f(*args, **kwargs)
     return decorated_function
 
 def get_prompt(purchase_history):
@@ -219,37 +257,83 @@ def product_detail(product_id):
 @app.route('/purchase', methods=['POST'])
 @init_purchases
 def purchase():
-    product_id = request.form.get('product_id')
-    product_name = request.form.get('product_name')
-    product_image = request.form.get('product_image')
-    product_description = request.form.get('product_description')
-    
-    # 如果description是字符串形式的列表，将其转换为空格连接的字符串
-    if product_description and product_description.startswith('[') and product_description.endswith(']'):
-        try:
-            description_list = json.loads(product_description)
-            if isinstance(description_list, list):
-                product_description = ' '.join(description_list)
-        except json.JSONDecodeError:
-            pass  # 如果解析失败，保持原样
-    
-    # Add to purchase history
-    session['purchases'].append({
-        'id': product_id,
-        'name': product_name,
-        'image': product_image,
-        'description': product_description,
-        'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-    
-    session.modified = True
-    
-    # Trigger interests extraction if not in progress
-    with interests_lock:
-        if not interests_in_progress:
-            interests_queue.put(session['purchases'])
-    
-    return redirect(url_for('index'))
+    try:
+        print("=== Purchase Route Start ===")
+        print(f"Current session state: {dict(session)}")
+        
+        # 获取表单数据
+        product_id = request.form.get('product_id')
+        product_name = request.form.get('product_name')
+        product_image = request.form.get('product_image')
+        product_description = request.form.get('product_description')
+        
+        print(f"Received form data: id={product_id}, name={product_name}")
+        
+        # 验证必要的数据是否存在
+        if not all([product_id, product_name, product_image]):
+            print(f"Missing required product data: id={product_id}, name={product_name}, image={product_image}")
+            return redirect(url_for('index'))
+        
+        # 如果description是字符串形式的列表，将其转换为空格连接的字符串
+        if product_description and product_description.startswith('[') and product_description.endswith(']'):
+            try:
+                description_list = json.loads(product_description)
+                if isinstance(description_list, list):
+                    product_description = ' '.join(description_list)
+            except json.JSONDecodeError:
+                print(f"Failed to parse product description: {product_description}")
+                # 如果解析失败，保持原样
+        
+        # 确保 purchases 列表存在
+        if 'purchases' not in session:
+            session['purchases'] = []
+            print("Created new purchases list in session")
+        
+        print(f"Current purchases before adding: {session['purchases']}")
+        
+        # 创建新的购买记录
+        new_purchase = {
+            'id': product_id,
+            'name': product_name,
+            'image': product_image,
+            'description': product_description,
+            'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        # 添加到购买历史
+        session['purchases'].append(new_purchase)
+        print(f"Added new purchase to history: {product_name} (ID: {product_id})")
+        
+        # 确保 session 被标记为已修改
+        session.modified = True
+        
+        print(f"Current purchases after adding: {session['purchases']}")
+        print(f"Session after update: {dict(session)}")
+        
+        # 验证添加是否成功
+        if new_purchase in session['purchases']:
+            print(f"Successfully verified purchase in session: {product_name}")
+        else:
+            print(f"Warning: Purchase verification failed for: {product_name}")
+        
+        # 打印当前购买历史长度
+        print(f"Current purchase history length: {len(session['purchases'])}")
+        
+        # Trigger interests extraction if not in progress
+        with interests_lock:
+            if not interests_in_progress:
+                interests_queue.put(session['purchases'])
+                print("Triggered interests extraction")
+        
+        print("=== Purchase Route End ===")
+        return redirect(url_for('index'))
+        
+    except Exception as e:
+        print(f"Error in purchase route: {e}")
+        import traceback
+        print(traceback.format_exc())
+        # 在出错时也重定向到首页
+        return redirect(url_for('index'))
 
 @app.route('/purchase_history')
 @init_purchases
@@ -310,5 +394,15 @@ def stream():
     
     return Response(generate(), mimetype='text/event-stream')
 
+@app.route('/debug/session')
+def debug_session():
+    return jsonify({
+        'session_data': dict(session),
+        'has_purchases': 'purchases' in session,
+        'purchases_length': len(session.get('purchases', [])),
+        'session_permanent': session.permanent,
+    })
+
 if __name__ == '__main__':
+    create_app()
     app.run(debug=True, port=5000)
