@@ -649,24 +649,22 @@ footer p {
 
 /* 兴趣标签更新 */
 .interests-container {
-    max-width: 1200px;
-    margin: 0 auto 2rem;
-    padding: 1.5rem;
     background: var(--white);
     border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .interests-box {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 1rem;
-    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
 .interest-item {
-    background: var(--white);
+    background-color: #e3f2fd;
     color: var(--primary-color);
     padding: 0.5rem 1rem;
     border-radius: 20px;
@@ -674,25 +672,18 @@ footer p {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.3s;
-    border: 1px solid var(--primary-color);
+    transition: all 0.3s ease;
+    cursor: default;
 }
 
 .interest-item:hover {
+    background-color: #bbdefb;
     transform: translateY(-2px);
-    background-color: var(--primary-color);
-    color: var(--white);
-}
-
-.interest-item:hover i {
-    color: var(--white);
 }
 
 .interest-item i {
     font-size: 0.8rem;
     color: var(--primary-color);
-    transition: color 0.3s;
 }
 
 /* 购买历史页面样式 */

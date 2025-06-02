@@ -8,6 +8,7 @@
             <p class="section-description">Based on your browsing history</p>
         </div>
         <div class="interests-box" id="interests-box">
+            <!-- Interests will be dynamically inserted here -->
         </div>
     </div>
     
@@ -47,13 +48,11 @@
         {% endfor %}
     </div>
 
-    {% if random_recommendations %}
+    <!-- 随机推荐部分 -->
     <div class="recommendations">
         <div class="section-header">
-            <div>
-                <h2><i class="fas fa-star"></i> Featured Products</h2>
-                <p class="section-description">Discover our latest collection</p>
-            </div>
+            <h2><i class="fas fa-star"></i> Featured Products</h2>
+            <p class="section-description">Discover our latest collection</p>
         </div>
         <div class="product-grid">
             {% for product in random_recommendations %}
@@ -86,7 +85,6 @@
             {% endfor %}
         </div>
     </div>
-    {% endif %}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -95,14 +93,19 @@
             const interestsBox = document.getElementById('interests-box');
 
             evtSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                if (data.interests && data.interests.length > 0) {
-                    interestsSection.style.display = 'block';
-                    interestsBox.innerHTML = data.interests
-                        .map(interest => `<div class="interest-item"><i class="fas fa-tag"></i> ${interest}</div>`)
-                        .join('');
-                } else {
-                    interestsSection.style.display = 'none';
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Received interests:', data.interests); // Debug log
+                    if (data.interests && Array.isArray(data.interests) && data.interests.length > 0) {
+                        interestsSection.style.display = 'block';
+                        interestsBox.innerHTML = data.interests
+                            .map(interest => `<div class="interest-item"><i class="fas fa-tag"></i> ${interest.trim()}</div>`)
+                            .join('');
+                    } else {
+                        interestsSection.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error processing interests:', error);
                 }
             };
 

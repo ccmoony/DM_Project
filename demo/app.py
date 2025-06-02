@@ -26,20 +26,16 @@ recommender = Recommender(
     device="cpu",
 )
 
-# Add predicted interests storage
-predicted_interests = None
+# Global variables for interests
+interests_queue = Queue()
+interests_in_progress = False
+current_interests = None
+interests_lock = threading.Lock()
 
 client = OpenAI(
     api_key=os.getenv("DASHSCOPE_API_KEY"),
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
 )
-
-# Recommendation task queue and status
-recommendation_queue = Queue()
-current_recommendation_task = None
-recommendation_in_progress = False
-recommendation_result = None
-recommendation_lock = threading.Lock()
 
 def load_products():
     products = []
@@ -93,63 +89,76 @@ def extract_interests(purchase_history):
         messages=messages_list,
     )
     generated_text = completion.choices[0].message.content
-    print(generated_text)
+    print("Generated interests text:", generated_text)  # Debug log
     interests_matches = re.findall(r"<interest>(.*?)</interest>", generated_text)
-    interests = "\\n".join(interests_matches)
+    print("Extracted interests:", interests_matches)  # Debug log
+    return interests_matches
 
-    return [interests]
+def interests_worker():
+    global interests_in_progress, current_interests
+    
+    while True:
+        purchase_history = interests_queue.get()
+        
+        with interests_lock:
+            interests_in_progress = True
+        
+        try:
+            # Extract interests
+            interests = extract_interests(purchase_history)
+            print("Worker extracted interests:", interests)  # Debug log
+            
+            with interests_lock:
+                current_interests = interests
+                interests_in_progress = False
+                    
+        except Exception as e:
+            print(f"Error in interests worker: {e}")
+            with interests_lock:
+                interests_in_progress = False
+        
+        interests_queue.task_done()
+        time.sleep(0.1)
+
+# Start the interests worker thread
+interests_thread = threading.Thread(target=interests_worker, daemon=True)
+interests_thread.start()
 
 def get_recommendations(purchase_history):
-    global recommender, predicted_interests
+    global recommender, current_interests
     
-    interests = extract_interests(purchase_history)
-    predicted_interests = interests[0].split('\\n')  # Store the predicted interests
     purchased_ids = [item['id'] for item in purchase_history]
     
+    # Get current interests (if any)
+    with interests_lock:
+        interests = [current_interests] if current_interests else None
+    
+    # Get recommendations using current interests (might be None)
     recommended_ids = recommender.predict_next_item(purchased_ids, interests=interests)
     
     all_products = load_products()
-    
     product_dict = {p['id']: p for p in all_products}
     
+    # Filter out already purchased items from recommendations
     recommended_products = []
     for prod_id in recommended_ids:
-        if prod_id in product_dict and product_dict[prod_id] not in recommended_products:
+        if prod_id in product_dict and prod_id not in purchased_ids:
             recommended_products.append(product_dict[prod_id])
     
-    return recommended_products
-
-def recommendation_worker():
-    global recommendation_in_progress, recommendation_result, current_recommendation_task, predicted_interests
+    # If we have less than 8 recommendations, add random products
+    if len(recommended_products) < 8:
+        existing_ids = set(p['id'] for p in recommended_products) | set(purchased_ids)
+        available_products = [p for p in all_products if p['id'] not in existing_ids]
+        
+        if available_products:
+            num_needed = 8 - len(recommended_products)
+            random_products = random.sample(available_products, min(num_needed, len(available_products)))
+            recommended_products.extend(random_products)
     
-    while True:
-        purchase_history = recommendation_queue.get()
-        
-        with recommendation_lock:
-            current_recommendation_task = purchase_history
-            recommendation_in_progress = True
-        
-        try:
-            # Get recommendations
-            recommendations = get_recommendations(purchase_history)
-            
-            with recommendation_lock:
-                # Only update if this is still the current task (no newer updates)
-                if current_recommendation_task == purchase_history:
-                    recommendation_result = recommendations
-                    recommendation_in_progress = False
-                    
-        except Exception as e:
-            print(f"Error in recommendation worker: {e}")
-            with recommendation_lock:
-                recommendation_in_progress = False
-        
-        recommendation_queue.task_done()
-        time.sleep(0.1)
-
-# Start the recommendation worker thread
-recommendation_thread = threading.Thread(target=recommendation_worker, daemon=True)
-recommendation_thread.start()
+    # Shuffle the final list of recommendations
+    random.shuffle(recommended_products)
+    
+    return recommended_products
 
 def get_random_recommendations(products, num_items=4, exclude_ids=None):
     """Get random recommendations excluding certain product IDs."""
@@ -163,43 +172,36 @@ def get_random_recommendations(products, num_items=4, exclude_ids=None):
 
 @app.route('/')
 def index():
-    global recommendation_result, recommendation_in_progress, predicted_interests
+    global current_interests
     
     products = load_products()
     
     # Check if we have purchases and should show recommendations
     if 'purchases' in session and len(session['purchases']) > 0:
-        # Check if we have a recommendation result
-        with recommendation_lock:
-            if recommendation_result is not None:
-                displayed_products = recommendation_result
-            else:
-                # Instead of random recommendations, use empty interests for initial recommendation
-                purchased_ids = [item['id'] for item in session['purchases']]
-                recommended_ids = recommender.predict_next_item(purchased_ids)
-                
-                # Convert recommended IDs to products
-                product_dict = {p['id']: p for p in products}
-                displayed_products = []
-                for prod_id in recommended_ids:
-                    if prod_id in product_dict and product_dict[prod_id] not in displayed_products:
-                        displayed_products.append(product_dict[prod_id])
-                
-                # If no recommendation is in progress, start one
-                if not recommendation_in_progress:
-                    recommendation_queue.put(session['purchases'])
+        # Trigger interests extraction if not in progress
+        with interests_lock:
+            if not interests_in_progress:
+                interests_queue.put(session['purchases'])
+        
+        # Use existing interests for recommendation
+        recommended_products = get_recommendations(session['purchases'])
+        
+        # Get random recommendations excluding recommended products
+        exclude_ids = set(p['id'] for p in recommended_products)
+        exclude_ids.update(item['id'] for item in session['purchases'])
+        random_recommendations = get_random_recommendations(products, num_items=4, exclude_ids=exclude_ids)
     else:
-        displayed_products = random.sample(products, min(8, len(products)))
-        predicted_interests = None
-    
-    # Get random recommendations excluding the displayed products
-    exclude_ids = [p['id'] for p in displayed_products]
-    random_recommendations = get_random_recommendations(products, exclude_ids=exclude_ids)
+        recommended_products = random.sample(products, min(8, len(products)))
+        current_interests = None
+        
+        # Get different random recommendations for the featured section
+        exclude_ids = set(p['id'] for p in recommended_products)
+        random_recommendations = get_random_recommendations(products, num_items=4, exclude_ids=exclude_ids)
     
     return render_template('index.html', 
-                         products=displayed_products, 
+                         products=recommended_products,
                          random_recommendations=random_recommendations,
-                         predicted_interests=predicted_interests)
+                         predicted_interests=current_interests)
 
 @app.route('/product/<product_id>')
 def product_detail(product_id):
@@ -242,11 +244,10 @@ def purchase():
     
     session.modified = True
     
-    # Trigger new recommendation
-    with recommendation_lock:
-        global current_recommendation_task
-        current_recommendation_task = session['purchases']
-        recommendation_queue.put(session['purchases'])
+    # Trigger interests extraction if not in progress
+    with interests_lock:
+        if not interests_in_progress:
+            interests_queue.put(session['purchases'])
     
     return redirect(url_for('index'))
 
@@ -263,12 +264,13 @@ def delete_purchase(purchase_id):
         session['purchases'] = [p for p in session['purchases'] if p['id'] != purchase_id]
         session.modified = True
         
-        # Trigger new recommendation if we have purchases left
-        if len(session['purchases']) > 0:
-            with recommendation_lock:
-                global current_recommendation_task
-                current_recommendation_task = session['purchases']
-                recommendation_queue.put(session['purchases'])
+        # Trigger interests extraction if we have purchases and it's not in progress
+        with interests_lock:
+            if len(session['purchases']) > 0 and not interests_in_progress:
+                interests_queue.put(session['purchases'])
+            elif len(session['purchases']) == 0:
+                global current_interests
+                current_interests = None
     
     return redirect(url_for('purchase_history'))
 
@@ -279,11 +281,10 @@ def clear_history():
         session['purchases'] = []
         session.modified = True
         
-        # Clear any pending recommendations
-        with recommendation_lock:
-            global current_recommendation_task, recommendation_result
-            current_recommendation_task = None
-            recommendation_result = None
+        # Clear current interests
+        global current_interests
+        with interests_lock:
+            current_interests = None
     
     return redirect(url_for('purchase_history'))
 
@@ -292,16 +293,18 @@ def stream():
     def generate():
         last_interests = None
         while True:
-            with recommendation_lock:
-                current_interests = predicted_interests
+            interests_to_send = None
+            with interests_lock:
+                interests_to_send = current_interests
             
-            if current_interests != last_interests:
-                if current_interests:
+            if interests_to_send != last_interests:
+                if interests_to_send:
+                    print("Sending interests:", interests_to_send)  # Debug log
                     data = json.dumps({
-                        'interests': current_interests
+                        'interests': interests_to_send
                     })
                     yield f"data: {data}\n\n"
-                last_interests = current_interests
+                last_interests = interests_to_send
             
             time.sleep(1)
     
