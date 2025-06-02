@@ -19,10 +19,10 @@ app.secret_key = 'your_secret_key_here'
 
 # Global variables for recommendation system
 recommender = Recommender(
-    config_path="./config/scientific_llm.yaml",
-    model_path="../myckpt/scientific/scientific_llm/93.pt",
-    code_path="../myckpt/scientific/scientific_llm/93.code.json",
-    rqvae_path="../myckpt/scientific/scientific_llm/93.pt.rqvae",
+    config_path="./config/game_llm.yaml",
+    model_path="../myckpt/game/45.pt",
+    code_path="../myckpt/game/45.code.json",
+    rqvae_path="../myckpt/game/45.pt.rqvae",
     device="cpu",
 )
 
@@ -43,7 +43,7 @@ recommendation_lock = threading.Lock()
 
 def load_products():
     products = []
-    with open('data/data.jsonl', 'r') as f:
+    with open('data/game.jsonl', 'r') as f:
         for line in f:
             products.append(json.loads(line))
     return products
@@ -60,7 +60,7 @@ def get_prompt(purchase_history):
     prompt = "The user's browsing history is: \n"
 
     for i, product in enumerate(purchase_history):
-        title = product["title"] if "title" in product else None
+        title = product["name"] if "name" in product else None
         main_category = product["main_category"] if "main_category" in product else None
         categories = product["categories"] if "categories" in product else None
         features = product["features"] if "features" in product else None
