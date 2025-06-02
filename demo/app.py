@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, Response
+from flask import Flask, render_template, request, redirect, url_for, session, Response, jsonify
 import json
 import random
 from functools import wraps
@@ -174,7 +174,16 @@ def index():
             if recommendation_result is not None:
                 displayed_products = recommendation_result
             else:
-                displayed_products = random.sample(products, min(8, len(products)))
+                # Instead of random recommendations, use empty interests for initial recommendation
+                purchased_ids = [item['id'] for item in session['purchases']]
+                recommended_ids = recommender.predict_next_item(purchased_ids)
+                
+                # Convert recommended IDs to products
+                product_dict = {p['id']: p for p in products}
+                displayed_products = []
+                for prod_id in recommended_ids:
+                    if prod_id in product_dict and product_dict[prod_id] not in displayed_products:
+                        displayed_products.append(product_dict[prod_id])
                 
                 # If no recommendation is in progress, start one
                 if not recommendation_in_progress:

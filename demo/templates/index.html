@@ -50,8 +50,10 @@
     {% if random_recommendations %}
     <div class="recommendations">
         <div class="section-header">
-            <h2><i class="fas fa-star"></i> Featured Products</h2>
-            <p class="section-description">Discover our latest collection</p>
+            <div>
+                <h2><i class="fas fa-star"></i> Featured Products</h2>
+                <p class="section-description">Discover our latest collection</p>
+            </div>
         </div>
         <div class="product-grid">
             {% for product in random_recommendations %}
