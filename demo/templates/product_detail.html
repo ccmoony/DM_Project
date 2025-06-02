@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="product-detail-container">
+    <div class="product-detail-card">
+        <img src="{{ product.image }}" alt="{{ product.name }}" class="detail-image">
+        <h2>{{ product.name }}</h2>
+        <div class="description-box">
+            <h3>Description:</h3>
+            <p>{{ product.description }}</p>
+        </div>
+        <form action="{{ url_for('purchase') }}" method="post">
+            <input type="hidden" name="product_id" value="{{ product.id }}">
+            <input type="hidden" name="product_name" value="{{ product.name }}">
+            <input type="hidden" name="product_image" value="{{ product.image }}">
+            <input type="hidden" name="product_description" value="{{ product.description }}">
+            <button type="submit" class="purchase-btn">Purchase</button>
+        </form>
+        <button onclick="window.history.back()" class="back-btn">Back to Products</button>
+    </div>
+</div>
+
+<style>
+.product-detail-container {
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.product-detail-card {
+    max-width: 800px;
+    width: 100%;
+    padding: 2rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.detail-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
+.description-box {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.back-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-left: 1rem;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+}
+</style>
+{% endblock %} 

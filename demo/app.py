@@ -151,6 +151,16 @@ def recommendation_worker():
 recommendation_thread = threading.Thread(target=recommendation_worker, daemon=True)
 recommendation_thread.start()
 
+def get_random_recommendations(products, num_items=4, exclude_ids=None):
+    """Get random recommendations excluding certain product IDs."""
+    if exclude_ids is None:
+        exclude_ids = set()
+    else:
+        exclude_ids = set(exclude_ids)
+    
+    available_products = [p for p in products if p['id'] not in exclude_ids]
+    return random.sample(available_products, min(num_items, len(available_products)))
+
 @app.route('/')
 def index():
     global recommendation_result, recommendation_in_progress, predicted_interests
@@ -173,7 +183,27 @@ def index():
         displayed_products = random.sample(products, min(8, len(products)))
         predicted_interests = None
     
-    return render_template('index.html', products=displayed_products, predicted_interests=predicted_interests)
+    # Get random recommendations excluding the displayed products
+    exclude_ids = [p['id'] for p in displayed_products]
+    random_recommendations = get_random_recommendations(products, exclude_ids=exclude_ids)
+    
+    return render_template('index.html', 
+                         products=displayed_products, 
+                         random_recommendations=random_recommendations,
+                         predicted_interests=predicted_interests)
+
+@app.route('/product/<product_id>')
+def product_detail(product_id):
+    products = load_products()
+    product = next((p for p in products if p['id'] == product_id), None)
+    if product is None:
+        return redirect(url_for('index'))
+    
+    # 将description列表转换为空格连接的字符串
+    if 'description' in product and isinstance(product['description'], list):
+        product['description'] = ' '.join(product['description'])
+    
+    return render_template('product_detail.html', product=product)
 
 @app.route('/purchase', methods=['POST'])
 @init_purchases
@@ -181,12 +211,23 @@ def purchase():
     product_id = request.form.get('product_id')
     product_name = request.form.get('product_name')
     product_image = request.form.get('product_image')
+    product_description = request.form.get('product_description')
+    
+    # 如果description是字符串形式的列表，将其转换为空格连接的字符串
+    if product_description and product_description.startswith('[') and product_description.endswith(']'):
+        try:
+            description_list = json.loads(product_description)
+            if isinstance(description_list, list):
+                product_description = ' '.join(description_list)
+        except json.JSONDecodeError:
+            pass  # 如果解析失败，保持原样
     
     # Add to purchase history
     session['purchases'].append({
         'id': product_id,
         'name': product_name,
         'image': product_image,
+        'description': product_description,
         'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
     

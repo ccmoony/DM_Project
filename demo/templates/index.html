@@ -10,17 +10,74 @@
     <div class="products-container">
         {% for product in products %}
         <div class="product-card">
-            <img src="{{ product.image }}" alt="{{ product.name }}">
-            <h3>{{ product.name }}</h3>
-            <form action="{{ url_for('purchase') }}" method="post">
-                <input type="hidden" name="product_id" value="{{ product.id }}">
-                <input type="hidden" name="product_name" value="{{ product.name }}">
-                <input type="hidden" name="product_image" value="{{ product.image }}">
-                <button type="submit" class="purchase-btn">Purchase</button>
-            </form>
+            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
+                <img src="{{ product.image }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+            </a>
+            <div class="button-group">
+                <form action="{{ url_for('purchase') }}" method="post">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="product_name" value="{{ product.name }}">
+                    <input type="hidden" name="product_image" value="{{ product.image }}">
+                    <input type="hidden" name="product_description" value="{{ product.description }}">
+                    <button type="submit" class="purchase-btn">Purchase</button>
+                </form>
+            </div>
         </div>
         {% endfor %}
     </div>
+
+    {% if random_recommendations %}
+    <div class="random-recommendations">
+        <h2>You May Also Like</h2>
+        <div class="products-container">
+            {% for product in random_recommendations %}
+            <div class="product-card">
+                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
+                    <img src="{{ product.image }}" alt="{{ product.name }}">
+                    <h3>{{ product.name }}</h3>
+                </a>
+                <div class="button-group">
+                    <form action="{{ url_for('purchase') }}" method="post">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="hidden" name="product_name" value="{{ product.name }}">
+                        <input type="hidden" name="product_image" value="{{ product.image }}">
+                        <input type="hidden" name="product_description" value="{{ product.description }}">
+                        <button type="submit" class="purchase-btn">Purchase</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <style>
+    .product-link {
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        display: block;
+    }
+
+    .product-link:hover {
+        opacity: 0.9;
+    }
+
+    .product-link img {
+        transition: transform 0.2s ease;
+    }
+
+    .product-link:hover img {
+        transform: scale(1.03);
+    }
+
+    .button-group {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
