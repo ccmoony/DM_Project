@@ -17,7 +17,10 @@ We implement a multi-layer cross-attention mechanism to fuse user interest embed
 During training, user interest are pre-processed. We use cached synchronous batch processing to ensure data consistency and quality. In the inference phase, we employ asynchronous processing to optimize user experience, allowing for real-time updates without blocking the user interface.
 
 ## Deployment
-
+### Configuration
+```bash
+pip install -r requirements.txt
+```
 ### Training
 
 You should first install the dependencies below for ETEGRec. Also make sure some necessary libraries, e.g. `sentence-transformers`, are installed. I have provided the processed dataset (.processed.jsonl) along with the pretrained RQVAE weights and SASRec embeddings in the `data` folder. If you want to use your own dataset, modify the `data_process.py` script to suit your needs.
@@ -46,6 +49,6 @@ cd demo
 python app.py
 ```
 this will start a web server watching port 5000. You can access the demo interface at `http://localhost:5000`.
-
+![Demo](./asset/demo.png)
 ## Thanks
 This is project is based on the codebases [ETEGrec](https://github.com/BishopLiu/ETEGRec). We gratefully thank the authors for their wonderful works.
