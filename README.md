@@ -1,4 +1,11 @@
-# From Text to Recommendations: LLM-Guided Interest Tokenization via T5 and Cross-Attention in Generative Models ![Static Badge](https://img.shields.io/badge/Project-Page-blue)
+# From Text to Recommendations: LLM-Guided Interest Tokenization via T5 and Cross-Attention in Generative Models 
+
+<div align="center">
+    <a href="https://github.com/ccmoony/DM_Project/edit/main/README.md" target="_blank">
+    <img src="https://img.shields.io/badge/Github-Code-deepgreen" alt="Github Code"></a>
+    <a href="[https://mvig-rhos.com/llm_inception](https://ccmoony.github.io/DM_website/)" target="_blank">
+    <img src="https://img.shields.io/badge/Project-Page-blue" alt="Project Page"></a>
+</div>
 
 ETEGRec is a SOTA end-to-end generative recommender system that integrates item tokenization and recommendation generation. However, its latent item tokenization process fails to take into account the high-level semantic information of user interests, which can lead to suboptimal recommendations. To address this, we introduce a brand new interest fusion mechanism that leverages user interest text embeddings to enhance the recommendation process. 
 
