@@ -5,7 +5,7 @@
 #SBATCH -c 4
 #SBATCH --gres gpu:2
 
-DATASET=scientific
+DATASET=game
 
 
 accelerate launch --config_file accelerate_config_ddp.yaml main.py \
