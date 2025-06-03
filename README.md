@@ -28,8 +28,19 @@ bash run.sh
 ```
 to train the ETEGRec model. This will utilize the preprocessed data and pretrained weights to train the model.
 
+### Evaluation results
+We evaluate our work on the Amazon Reviews'23 Industrial and Scientific dataset. The evaluation results of ETEGRec on the test set are as follows:
+
+| Model   | Best Validation Score | recall@1     | recall@5     | ndcg@5       | recall@10    | ndcg@10      |
+| ------- | --------------------- | ------------ | ------------ | ------------ | ------------ | ------------ |
+| ETEGRec | 0.027147              | 0.008159     | **0.027538** | 0.017766     | 0.041797     | 0.022369     |
+| Ours    | **0.027795**          | **0.008669** | 0.027165     | **0.017943** | **0.043503** | **0.023199** |
+| Boost   | 2.39%                 | 6.25%        | -1.35%       | 1.00%        | 4.08%        | 3.71%        |
+
+
+
 ### Demo
-Run the following command to start the FastAPI server for inference:
+You should first set the environment variable `DASHSCOPE_API_KEY` to your DashScope API Key. Then run the following command to start the FastAPI server for inference:
 ```bash
 cd demo
 python app.py
