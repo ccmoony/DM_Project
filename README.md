@@ -1,8 +1,6 @@
-# ETEGRec
+# From Text to Recommendations: LLM-Guided Interest Tokenization via T5 and Cross-Attention in Generative Models
 
-This is the official PyTorch implementation for the paper:
-
-> [Generative Recommender with End-to-End Learnable Item Tokenization](https://doi.org/10.1145/3726302.3729989)
+This is project is based on the codebases [ETEGrec](https://github.com/BishopLiu/ETEGRec). We gratefully thank the authors for their wonderful works.
 
 ## Overview
 
@@ -37,4 +35,10 @@ bash run_pretrain.sh
 
 ```shell
 bash run.sh
+```
+
+## Demo
+```bash
+cd demo
+python app.py
 ```
