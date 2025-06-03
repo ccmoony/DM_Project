@@ -4,6 +4,8 @@ ETEGRec is a SOTA end-to-end generative recommender system that integrates item 
 
 ## Methodology
 
+![model](./asset/ours.jpg)
+
 ### LLM-Guided Interest Prediction
 
 We utilize a large language model (LLM) to extract user interests from their purchase history and item metadata. The LLM generates structured interest categories, which are then used to enhance the recommendation process.
